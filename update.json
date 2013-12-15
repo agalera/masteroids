@@ -1,0 +1,132 @@
+{
+    "files": [
+        {
+            "url": "assets/mapa.tmx",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/frases1.png",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/dan_ough_01.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/dan_ough_02.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/jove_paniu_01.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/jove_bang_01.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/dan_ough_03.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/dan_ough_04.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/dan_ough_05.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/jove_arg_01.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/jove_arg_02.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/jove_arg_03.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/jove_arg_04.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/dan_train_02.wav",
+            "md5": "a5e93707fb5c3341b7b85b58c14f2b50",
+            "value": false
+        },
+        {
+            "url": "assets/player.png",
+            "md5": "a9c3c1246d7942eff39bf1545f4e9dc2",
+            "value": false
+        },
+        {
+            "url": "assets/inicio.png",
+            "md5": "a9c3c1246d7942eff39bf1545f4e9dc2",
+            "value": false
+        },
+        {
+            "url": "assets/gameover.png",
+            "md5": "a9c3c1246d7942eff39bf1545f4e9dc2",
+            "value": false
+        },
+        {
+            "url": "assets/icons.png",
+            "md5": "a9c3c1246d7942eff39bf1545f4e9dc2",
+            "value": false
+        },
+        {
+            "url": "assets/stGrid1.png",
+            "md5": "d8842dc4c78d660c776b906cd21cbe31",
+            "value": false
+        },
+        {
+            "url": "assets/stGriddeco.png",
+            "md5": "d8842dc4c78d660c776b906cd21cbe31",
+            "value": false
+        },
+        {
+            "url": "assets/tren_1.png",
+            "md5": "d8842dc4c78d660c776b906cd21cbe31",
+            "value": false
+        },
+	    {
+            "url": "assets/test.wav",
+            "md5": "d8842dc4c78d660c776b906cd21cbe31",
+            "value": false
+        },
+        {
+            "url": "assets/gun_shoot_metal.wav",
+            "md5": "d8842dc4c78d660c776b906cd21cbe31",
+            "value": false
+        },
+        {
+            "url": "assets/bullet.png",
+            "md5": "c374a43b06b51e3cb1c132a243ecb3fd",
+            "value": false
+        },
+        {
+            "url": "start.exe",
+            "md5": "6d512573776ba9353c533bf616c3cfee",
+            "value": false
+        }
+    ],
+    "boolean": true,
+    "null": null,
+    "number": 1
+}
