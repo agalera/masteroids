@@ -68,7 +68,7 @@ class mainProcess(Thread):
             if len(self.clientes) == 0:
                 updateFPS()
                 t_delta = getDelta()
-                timeSleep = 0.02 - (t_delta / 1000.0 )
+                timeSleep = 0.03 - (t_delta / 1000.0 )
                 if timeSleep > 0.0:
                     time.sleep(timeSleep)
             else:
@@ -103,7 +103,7 @@ class mainProcess(Thread):
                         print "remove 2"
                         taa.remove()
                         self.clientes.remove(taa)
-                timeSleep = 0.02 - (t_delta / 1000.0 )
+                timeSleep = 0.03 - (t_delta / 1000.0 )
                 if timeSleep > 0.0:
                     time.sleep(timeSleep)
 class Cliente(Thread):

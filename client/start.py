@@ -352,7 +352,7 @@ def RenderGLFun():
         #draw_select()
         #go to gpu
         glutSwapBuffers()
-        timeSleep = 0.02 - (t_delta / 1000.0 )
+        timeSleep = 0.03 - (t_delta / 1000.0 )
         if timeSleep > 0.0:
             time.sleep(timeSleep)
 def draw_naves():
@@ -413,7 +413,7 @@ class update_dates(Thread):
     def __init__(self):
         Thread.__init__(self)
         self.s = socket.socket(socket.SOCK_DGRAM)
-        self.s.connect(("127.0.0.1", int(8002)))
+        self.s.connect(("192.168.1.2", int(8003)))
         #mode
         mode = 1
         self.s.send(pack('i',mode))
