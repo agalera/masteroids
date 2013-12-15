@@ -69,7 +69,8 @@ class mainProcess(Thread):
                 updateFPS()
                 t_delta = getDelta()
                 timeSleep = 0.02 - (t_delta / 1000.0 )
-                time.sleep(timeSleep)
+                if timeSleep > 0.0:
+                    time.sleep(timeSleep)
             else:
                 updateFPS()
                 t_delta = getDelta()
@@ -167,8 +168,7 @@ if __name__ == '__main__':
 
     myListener = myContactListener(borrar)
     myDestructor = myDestructionListener()
-    world=b2World(contactListener=myListener, destructorListener=myDestructor) # default gravity is (0,-10) and doSleep is True
-    world.gravity = (0, 0)
+    world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
     # Se prepara el servidor
     #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server = socket.socket(socket.SOCK_DGRAM)
