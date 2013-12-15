@@ -176,7 +176,7 @@ if __name__ == '__main__':
     clientes = []
     maestro = mainProcess(clientes)
     maestro.start()
-    server.bind(("", 8002))
+    server.bind(("", 8003))
     server.listen(5)
     print "Wait clients..."
     while 1:
