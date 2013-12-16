@@ -413,7 +413,7 @@ class update_dates(Thread):
     def __init__(self):
         Thread.__init__(self)
         self.s = socket.socket(socket.SOCK_DGRAM)
-        self.s.connect(("192.168.1.2", int(8003)))
+        self.s.connect((sys.argv[1], int(sys.argv[2])))
         #mode
         mode = 1
         self.s.send(pack('i',mode))
