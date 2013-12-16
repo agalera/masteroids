@@ -125,7 +125,9 @@ class Cliente(Thread):
                 result = self.socket.recv(8)
                 if result != "":
                     self.Vactual_info = unpack("????f",result)
-
+                else:
+                    seguir = False
+                    print "leave client"
             except:
                 seguir = False
                 print "leave client"
