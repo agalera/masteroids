@@ -11,6 +11,7 @@ import smtplib  #lib send mails
 from struct import pack, unpack
 from threading import Thread
 from Box2D import *
+import math
 
 from clases.myContactListener import myContactListener
 from clases.myDestructionListener import myDestructionListener
@@ -141,13 +142,24 @@ class Cliente(Thread):
         return [self.datos[1], self.player.body.position[0],self.player.body.position[1],self.player.body.angle]
     def move(self, t_delta):
         if(self.Vactual_info[0] == True):
-            self.player.body.ApplyLinearImpulse(b2Vec2(0.0,0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
-        if(self.Vactual_info[1] == True):
-            self.player.body.ApplyLinearImpulse(b2Vec2(-0.0015*t_delta,0.0000000), b2Vec2(2+self.player.body.position[0],self.player.body.position[1]),1)
+            #self.player.body.ApplyLinearImpulse(b2Vec2(0.0,0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
+            position_info = [0,0]
+            position_info[0] -= (2.0 * math.sin(self.player.body.angle))*16
+            position_info[1] += (2.0 * math.cos(self.player.body.angle))*16
+            self.player.body.ApplyForce(b2Vec2(position_info), b2Vec2(self.player.body.position),1)
         if(self.Vactual_info[2] == True):
-            self.player.body.ApplyLinearImpulse(b2Vec2(0.0,-0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
+            #self.player.body.ApplyLinearImpulse(b2Vec2(-0.0015*t_delta,0.0000000), b2Vec2(2+self.player.body.position[0],self.player.body.position[1]),1)
+            position_info = [0,0]
+            position_info[0] += (1.0 * math.sin(self.player.body.angle))*16
+            position_info[1] -= (1.0 * math.cos(self.player.body.angle))*16
+            self.player.body.ApplyForce(b2Vec2(position_info), b2Vec2(self.player.body.position),1)
+
+        if(self.Vactual_info[1] == True):
+            #self.player.body.ApplyLinearImpulse(b2Vec2(0.0,-0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
+            self.player.body.ApplyTorque(0.3,1)
         if(self.Vactual_info[3] == True):
-            self.player.body.ApplyLinearImpulse(b2Vec2(0.0015*t_delta,0.0000000), b2Vec2(2+self.player.body.position[0],self.player.body.position[1]),1)
+            #self.player.body.ApplyLinearImpulse(b2Vec2(0.0015*t_delta,0.0000000), b2Vec2(2+self.player.body.position[0],self.player.body.position[1]),1)
+            self.player.body.ApplyTorque(-0.3,1)
     def remove(self):
         return self.status
 
