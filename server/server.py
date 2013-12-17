@@ -23,7 +23,7 @@ import os.path
 def recvpackage(socket_cliente,size_package):
     package = socket_cliente.recv(int(size_package))
     if (len(package) != size_package):
-        #fragment buffer
+        print "fragment buffer"
         Esperando = True
         while Esperando:
             if (len(package) != size_package):
@@ -132,9 +132,12 @@ class Cliente(Thread):
         seguir = True
         while seguir:
             try:
-                result = recvpackage(self.socket, 5)
+                result = self.socket.recv(5)
                 if result != "":
-                    self.Vactual_info = unpack("?????",result)
+                    try:
+                        self.Vactual_info = unpack("?????",result)
+                    except:
+                        pass
                 else:
                     seguir = False
                     print "leave client"
