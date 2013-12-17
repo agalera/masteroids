@@ -135,7 +135,7 @@ class Cliente(Thread):
                 break
 
     def set_box2d(self):
-        tmp = self.world.CreateDynamicBody(position=(0,0),angularDamping=30.0, linearDamping= 10.0, angle= 0)
+        tmp = self.world.CreateDynamicBody(position=(0,0),angularDamping=30.0, linearDamping= 1.0, angle= 0)
         return tmp.CreatePolygonFixture(box=(0.16*0.94,0.16*0.94),density=1, friction= 6)
 
     def get_position(self):
@@ -144,14 +144,14 @@ class Cliente(Thread):
         if(self.Vactual_info[0] == True):
             #self.player.body.ApplyLinearImpulse(b2Vec2(0.0,0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
             position_info = [0,0]
-            position_info[0] -= (2.0 * math.sin(self.player.body.angle))*16
-            position_info[1] += (2.0 * math.cos(self.player.body.angle))*16
+            position_info[0] -= (0.3 * math.sin(self.player.body.angle))*16
+            position_info[1] += (0.3 * math.cos(self.player.body.angle))*16
             self.player.body.ApplyForce(b2Vec2(position_info), b2Vec2(self.player.body.position),1)
         if(self.Vactual_info[2] == True):
             #self.player.body.ApplyLinearImpulse(b2Vec2(-0.0015*t_delta,0.0000000), b2Vec2(2+self.player.body.position[0],self.player.body.position[1]),1)
             position_info = [0,0]
-            position_info[0] += (1.0 * math.sin(self.player.body.angle))*16
-            position_info[1] -= (1.0 * math.cos(self.player.body.angle))*16
+            position_info[0] += (0.1 * math.sin(self.player.body.angle))*16
+            position_info[1] -= (0.1 * math.cos(self.player.body.angle))*16
             self.player.body.ApplyForce(b2Vec2(position_info), b2Vec2(self.player.body.position),1)
 
         if(self.Vactual_info[1] == True):
