@@ -25,6 +25,7 @@ animate = 0.0
 lastFrame = time.time()
 test = 0.0
 wasd = [0,0,0,0,0,[0,0,0]]
+cambios = False
 Lchunk = []
 size_tile = 0.16
 calculate_size = size_tile
@@ -72,6 +73,7 @@ def create_camera():
     glRotate(0, 0, 0, 1)
     camera = player.get_position()
     glTranslate( -camera[0] , -camera[1], 0)
+    return camera
 
 def ControlRatonPos(x,y):
     global radians
@@ -90,22 +92,7 @@ def ControlRaton(key,leave,x,y):
         zoom += 0.08
         reshapeFun(resolution[0], resolution[1])
 
-def ControlTeclado(key,x,y):
-    global wasd
-    global radians
-    if (key == "w"):
-        wasd[0] = 1
-    if (key == "a"):
-        wasd[1] = 1
-    if (key == "s"):
-        wasd[2] = 1
-    if (key == "d"):
-        wasd[3] = 1
-    if (key == "q"):
-        player.pick_object(Lchunk[0].pick_object(v_object_select))
 
-        #Lchunk[0].set_object(v_object_select, objetos(496,2.0))
-        wasd[4] = 1
 
 def object_select():
     v_object_select[0] = int((player.get_position()[0][0]+0.16) * 3.125)
@@ -148,9 +135,35 @@ def object_select():
     #    #print "right"
 
 
+def ControlTeclado(key,x,y):
+    global wasd
+    global radians
+    global cambios
+    if (key == "w"):
+        if wasd[0] == 0:
+            wasd[0] = 1
+            cambios = True
+    if (key == "a"):
+        if wasd[1] == 0:
+            wasd[1] = 1
+            cambios = True
+    if (key == "s"):
+        if wasd[2] == 0:
+            wasd[2] = 1
+            cambios = True
+    if (key == "d"):
+        if wasd[3] == 0:
+            wasd[3] = 1
+            cambios = True
+    if (key == "q"):
+        if wasd[4] == 0:
+            wasd[4] = 1
+            cambios = True
 
+        #Lchunk[0].set_object(v_object_select, objetos(496,2.0))
 def ControlTecladoUp(key,x,y):
     global wasd
+    global cambios
     if (key == "w"):
         wasd[0] = 0
     if (key == "a"):
@@ -161,7 +174,7 @@ def ControlTecladoUp(key,x,y):
         wasd[3] = 0
     if (key == "q"):
         wasd[4] = 0
-
+    cambios = True
 def draw_posible_options():
     Lchunk[0].check_object(v_object_select)
 
@@ -298,6 +311,30 @@ def new_frame(init):
         glMatrixMode(GL_TEXTURE)
         glPopMatrix()
         glMatrixMode(GL_MODELVIEW)
+def background():
+    texture_info_temp = 2
+    textureXOffset = 1
+    textureYOffset = 1
+    textureHeight  = 1
+    textureWidth   = 1
+
+    #glTranslatef( self.body.position[0] , self.body.position[1], 0.00)
+    glRotate(0, 0, 0, 1)
+    glBegin(GL_QUADS)
+    glTexCoord2f(textureXOffset, textureYOffset - textureHeight)
+
+    glVertex3f(-100, -100, 0)
+
+    glTexCoord2f(textureXOffset + textureWidth, textureYOffset - textureHeight)
+    glVertex3f(100, -100, 0)
+
+    glTexCoord2f(textureXOffset + textureWidth, textureYOffset)
+    glVertex3f( 100,  100, 0)
+
+    glTexCoord2f(textureXOffset,textureYOffset)
+    glVertex3f(-100, 100, 0)
+    glEnd()
+    glRotate(0, 0, 0, -1)
 
 def RenderGLFun():
     global status_global
@@ -337,6 +374,8 @@ def RenderGLFun():
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
         create_camera()
+        setupTexture(6)
+        background()
         #draw time (optional)
         setupTexture(0)
         draw_naves()
@@ -352,9 +391,10 @@ def RenderGLFun():
         #draw_select()
         #go to gpu
         glutSwapBuffers()
-        timeSleep = 0.03 - (t_delta / 1000.0 )
-        if timeSleep > 0.0:
-            time.sleep(timeSleep)
+        #timeSleep = 0.03 - (t_delta / 1000.0 )
+        #if timeSleep > 0.0:
+        #    time.sleep(timeSleep)
+
 def draw_naves():
     for taa in list(naves):
             draw_nave(taa)
@@ -425,7 +465,12 @@ class update_dates(Thread):
         while True:
             global naves
             naves = self.update_info()
-            self.s.send(pack('????f', wasd[0], wasd[1], wasd[2], wasd[3], radians))
+
+            if cambios:
+                print "envio teclas"
+                self.s.send(pack('?????', wasd[0], wasd[1], wasd[2], wasd[3], wasd[4]))
+                global cambios
+                cambios = False
 
     def update_info(self):
 
@@ -437,6 +482,7 @@ class update_dates(Thread):
                 try:
                     player.set_position(tmp2)
                 except:
+                    time.sleep(1)
                     print "aun no existe player"
             tmp.append(tmp2)
         return tmp
