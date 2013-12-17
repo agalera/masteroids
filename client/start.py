@@ -465,11 +465,9 @@ class update_dates(Thread):
         while True:
             global naves
             naves = self.update_info()
-            #lo dejo asi por que si no con servidor arm no funciona
-            self.s.send(pack('?????', wasd[0], wasd[1], wasd[2], wasd[3], wasd[4]))
             if cambios:
                 print "envio teclas"
-                #self.s.send(pack('?????', wasd[0], wasd[1], wasd[2], wasd[3], wasd[4]))
+                self.s.send(pack('?????', wasd[0], wasd[1], wasd[2], wasd[3], wasd[4]))
                 global cambios
                 cambios = False
 
