@@ -134,7 +134,6 @@ class Cliente(Thread):
             try:
                 result = recvpackage(self.socket, 5)
                 if result != "":
-                    print result
                     self.Vactual_info = unpack("?????",result)
                 else:
                     seguir = False
