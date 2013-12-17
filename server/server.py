@@ -131,7 +131,7 @@ class Cliente(Thread):
     def run(self):
         seguir = True
         while seguir:
-#            try:
+            try:
                 result = recvpackage(self.socket, 5)
                 if result != "":
                     print result
@@ -139,10 +139,10 @@ class Cliente(Thread):
                 else:
                     seguir = False
                     print "leave client"
-#            except:
-#                seguir = False
-#                print "torroscazo"
-#                break
+            except:
+                seguir = False
+                print "torroscazo"
+                break
 
     def set_box2d(self):
         tmp = self.world.CreateDynamicBody(position=(0,0),angularDamping=30.0, linearDamping= 1.0, angle= 0)
