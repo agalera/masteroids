@@ -364,6 +364,7 @@ def RenderGLFun():
         #update()
         #---- Init Experimental zone ----
         global animate
+        global naves
         animate +=float(t_delta)/60.0
         if animate > 16:
             animate = 0.0
@@ -373,6 +374,13 @@ def RenderGLFun():
         glClearColor(0.3,0.3,0.3,0.0)
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
+        naves = naves_new
+        for taa in naves:
+            if taa[0] == player_id:
+                try:
+                    player.set_position(taa)
+                except:
+                    print "aun no existe player"
         create_camera()
         setupTexture(6)
         background()
@@ -436,7 +444,7 @@ def updateFPS():
 def recvpackage(socket_cliente,size_package):
     package = socket_cliente.recv(int(size_package))
     if (len(package) != size_package):
-        #fragment buffer
+        print "fragment buffer"
         Esperando = True
         while Esperando:
             if (len(package) != size_package):
@@ -457,14 +465,14 @@ class update_dates(Thread):
         #mode
         mode = 1
         self.s.send(pack('i',mode))
-
-        self.player_id = unpack('i', recvpackage(self.s,4))[0]
-        print "id: "+ str(self.player_id)
+        global player_id
+        player_id = unpack('i', recvpackage(self.s,4))[0]
+        print "id: "+ str(player_id)
 
     def run(self):
         while True:
-            global naves
-            naves = self.update_info()
+            global naves_new
+            naves_new = self.update_info()
             if cambios:
                 print "envio teclas"
                 self.s.send(pack('?????', wasd[0], wasd[1], wasd[2], wasd[3], wasd[4]))
@@ -476,12 +484,8 @@ class update_dates(Thread):
         numero_datos = unpack("i", recvpackage(self.s, 4))[0]
         tmp = []
         for taa in range(int(numero_datos)):
-            tmp2 = unpack("ifff", recvpackage(self.s, 16))
-            if tmp2[0] == self.player_id:
-                try:
-                    player.set_position(tmp2)
-                except:
-                    print "aun no existe player"
+            #tmp2 = unpack("ifff", recvpackage(self.s, 16))
+            tmp2 = unpack("ifff", self.s.recv(16))
             tmp.append(tmp2)
         return tmp
 
