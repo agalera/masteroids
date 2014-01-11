@@ -375,18 +375,25 @@ def RenderGLFun():
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
         naves = naves_new
-        for taa in naves:
-            if taa[0] == player_id:
-                try:
-                    player.set_position(taa)
-                except:
-                    print "aun no existe player"
+        try:
+            for taa in naves:
+                if taa[0] == player_id:
+                    try:
+                        player.set_position(taa)
+                    except:
+                        print "aun no existe player"
+        except:
+            print "malformed package"
+            print naves
         create_camera()
         setupTexture(6)
         background()
         #draw time (optional)
         setupTexture(0)
-        draw_naves()
+        try:
+            draw_naves()
+        except:
+            print "malformed package"
         #player.draw() #components.py:31 opengl
         #setupTexture(2)
 
@@ -460,6 +467,7 @@ def recvpackage(socket_cliente,size_package):
 class update_dates(Thread):
     def __init__(self):
         Thread.__init__(self)
+        #self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.s = socket.socket(socket.SOCK_DGRAM)
         self.s.connect((sys.argv[1], int(sys.argv[2])))
         #mode
@@ -472,7 +480,9 @@ class update_dates(Thread):
     def run(self):
         while True:
             global naves_new
-            naves_new = self.update_info()
+            tmp = self.update_info()
+            if (tmp != True):
+                naves_new = tmp
             if cambios:
                 print "envio teclas"
                 self.s.send(pack('?????', wasd[0], wasd[1], wasd[2], wasd[3], wasd[4]))
@@ -482,12 +492,24 @@ class update_dates(Thread):
     def update_info(self):
 
         numero_datos = unpack("i", recvpackage(self.s, 4))[0]
-        tmp = []
-        for taa in range(int(numero_datos)):
-            #tmp2 = unpack("ifff", recvpackage(self.s, 16))
-            tmp2 = unpack("ifff", self.s.recv(16))
-            tmp.append(tmp2)
-        return tmp
+        if (numero_datos < 0):
+            #hp
+            if numero_datos == -1:
+                print "hp",unpack("f", self.s.recv(4))
+            #energy
+            elif numero_datos == -2:
+                print "energy",unpack("f", self.s.recv(4))
+            #hp y energy
+            elif numero_datos == -3:
+                print "hp, energy",unpack("ff", self.s.recv(8))
+            return True
+        else:
+            tmp = []
+            for taa in range(int(numero_datos)):
+                #tmp2 = unpack("ifff", recvpackage(self.s, 16))
+                tmp2 = unpack("ifff", self.s.recv(16))
+                tmp.append(tmp2)
+            return tmp
 
 if __name__ == '__main__':
     glutInit()

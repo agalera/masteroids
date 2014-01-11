@@ -128,6 +128,12 @@ class Cliente(Thread):
         self.Vactual_info = [False, False, False, False, False]
         self.block_fire = 0
 
+        #Temporal hasta que tenga db
+        self.hp = 100.0
+        self.energy = 100.0
+        self.change_hp = True
+        self.change_energy = True
+
     def run(self):
         seguir = True
         while seguir:
@@ -146,6 +152,34 @@ class Cliente(Thread):
                 print "torroscazo"
                 break
 
+    def send_package(self, package):
+        tmp = 0
+        pack_tmp = ""
+        if self.change_hp:
+            tmp -= 1
+            pack_tmp += pack('f', float(self.hp))
+            self.change_hp = False
+        if self.change_energy:
+            tmp -= 2
+            pack_tmp += pack('f', float(self.energy))
+            self.change_energy = False
+        if tmp != 0:
+            pack_tmp = pack('i', tmp) + pack_tmp
+            package += pack_tmp
+        self.socket.send(package)
+
+    def recv_damage(self,dmg):
+        self.hp -= dmg
+        self.change_hp = True
+
+    def use_energy(self,value):
+        if (self.energy > value):
+            self.energy -= value
+            self.change_energy = True
+            return True
+        else:
+            return False
+
     def set_box2d(self):
         tmp = self.world.CreateDynamicBody(position=(0,0),angularDamping=30.0, linearDamping= 1.0, angle= 0)
         return tmp.CreatePolygonFixture(box=(0.16*0.94,0.16*0.94),density=1, friction= 6)
@@ -155,19 +189,22 @@ class Cliente(Thread):
     def move(self, t_delta):
         if (self.block_fire >= 0):
             self.block_fire -= t_delta
+        if (self.energy < 100):
+            self.use_energy(-t_delta*0.01)
         if(self.Vactual_info[0] == True):
-            #self.player.body.ApplyLinearImpulse(b2Vec2(0.0,0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
-            position_info = [0,0]
-            position_info[0] -= (0.3 * math.sin(self.player.body.angle))*16
-            position_info[1] += (0.3 * math.cos(self.player.body.angle))*16
-            self.player.body.ApplyForce(b2Vec2(position_info), b2Vec2(self.player.body.position),1)
+            if self.use_energy(0.2):
+                #self.player.body.ApplyLinearImpulse(b2Vec2(0.0,0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
+                position_info = [0,0]
+                position_info[0] -= (0.3 * math.sin(self.player.body.angle))*16
+                position_info[1] += (0.3 * math.cos(self.player.body.angle))*16
+                self.player.body.ApplyForce(b2Vec2(position_info), b2Vec2(self.player.body.position),1)
         if(self.Vactual_info[2] == True):
-            #self.player.body.ApplyLinearImpulse(b2Vec2(-0.0015*t_delta,0.0000000), b2Vec2(2+self.player.body.position[0],self.player.body.position[1]),1)
-            position_info = [0,0]
-            position_info[0] += (0.1 * math.sin(self.player.body.angle))*16
-            position_info[1] -= (0.1 * math.cos(self.player.body.angle))*16
-            self.player.body.ApplyForce(b2Vec2(position_info), b2Vec2(self.player.body.position),1)
-
+            if self.use_energy(0.1):
+                #self.player.body.ApplyLinearImpulse(b2Vec2(-0.0015*t_delta,0.0000000), b2Vec2(2+self.player.body.position[0],self.player.body.position[1]),1)
+                position_info = [0,0]
+                position_info[0] += (0.1 * math.sin(self.player.body.angle))*16
+                position_info[1] -= (0.1 * math.cos(self.player.body.angle))*16
+                self.player.body.ApplyForce(b2Vec2(position_info), b2Vec2(self.player.body.position),1)
         if(self.Vactual_info[1] == True):
             #self.player.body.ApplyLinearImpulse(b2Vec2(0.0,-0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
             self.player.body.ApplyTorque(0.3,1)
@@ -175,22 +212,21 @@ class Cliente(Thread):
             #self.player.body.ApplyLinearImpulse(b2Vec2(0.0015*t_delta,0.0000000), b2Vec2(2+self.player.body.position[0],self.player.body.position[1]),1)
             self.player.body.ApplyTorque(-0.3,1)
         if(self.Vactual_info[4] == True and self.block_fire <= 0):
-            self.block_fire = 800
-            position_info = copy.copy(self.player.body.linearVelocity)
-            position_info[0] -= 80*math.sin(self.player.body.angle)
-            position_info[1] += 80*math.cos(self.player.body.angle)
-            print "creando bala"
-            self.bullet.append([self.player.body.position, self.world.CreateDynamicBody(
-                position=(self.player.body.position[0]-(math.sin(self.player.body.angle)*0.8),self.player.body.position[1]+(math.cos(self.player.body.angle)*0.8)),
-                bullet=True,angle = self.player.body.angle,  angularDamping=5.0, linearDamping= 0.0,
-                fixtures=b2FixtureDef(shape=b2CircleShape(radius=(0.16/1.4)), density=50.0),
-                linearVelocity=(position_info))]
-            )
+            if self.use_energy(10):
+                self.block_fire = 800
+                position_info = copy.copy(self.player.body.linearVelocity)
+                position_info[0] -= 80*math.sin(self.player.body.angle)
+                position_info[1] += 80*math.cos(self.player.body.angle)
+                print "creando bala"
+                self.bullet.append([self.player.body.position, self.world.CreateDynamicBody(
+                    position=(self.player.body.position[0]-(math.sin(self.player.body.angle)*0.8),self.player.body.position[1]+(math.cos(self.player.body.angle)*0.8)),
+                    bullet=True,angle = self.player.body.angle,  angularDamping=5.0, linearDamping= 0.0,
+                    fixtures=b2FixtureDef(shape=b2CircleShape(radius=(0.16/1.4)), density=50.0),
+                    linearVelocity=(position_info))]
+                )
     def remove(self):
-        return self.status
-
-    def send_package(self, package):
-        self.socket.send(package)
+        self.world.DestroyBody(self.player.body)
+        #return self.status
 
 #################################### Init code ####################################
 if __name__ == '__main__':
