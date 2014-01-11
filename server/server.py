@@ -14,6 +14,7 @@ from threading import Thread
 from Box2D import *
 import math
 
+from clases.disparos import disparos
 from clases.myContactListener import myContactListener
 from clases.myDestructionListener import myDestructionListener
 
@@ -57,10 +58,11 @@ def updateFPS():
         last_time = time.time()
         #print last_time
 class mainProcess(Thread):
-    def __init__(self, clientes, bullet):
+    def __init__(self, clientes, bullet, borrar):
         Thread.__init__(self)
         self.clientes = clientes
         self.bullet = bullet
+        self.borrar = borrar
 
     def run(self):
         global t_delta
@@ -78,21 +80,28 @@ class mainProcess(Thread):
                 updateFPS()
                 t_delta = getDelta()
                 timeStep = t_delta*0.0004
+                #borrar bullet colisionados
+                for taa in self.borrar:
+                    self.bullet.remove(taa.userData)
+                    print self.bullet
+                    world.DestroyBody(taa)
+                    self.borrar.remove(taa)
+                    print "remove time"
                 #clear bullet much range
                 for taa in self.bullet:
-                    if(math.hypot(taa[0][0] - taa[1].position[0], taa[0][1] - taa[1].position[1])>50):
-                        world.DestroyBody(taa[1])
+                    actual_pos = taa.get_position()
+                    init_pos = taa.get_init_post()
+                    #print math.hypot(init_pos[0][0] - actual_pos[0][0], init_pos[0][1] - actual_pos[0][1])
+                    if(math.hypot(init_pos[0] - actual_pos[0][0], init_pos[1] - actual_pos[0][1])>50):
+                        world.DestroyBody(taa.get_body())
                         self.bullet.remove(taa)
-
                 for taa in self.clientes:
                     taa.move(t_delta)
-
                     #mueve las mierdas
                 #calcula las mierdas
                 world.Step(timeStep, vel_iters, pos_iters)
                 world.ClearForces()
                 #crea un paquete
-
                 package = pack('i', int(len(self.clientes)+len(self.bullet)))
                 for taa in self.clientes:
                     try:
@@ -101,8 +110,8 @@ class mainProcess(Thread):
                     except:
                         pass
                 for taa in self.bullet:
-                    package += pack('ifff',-1,taa[1].position[0],taa[1].position[1], taa[1].angle )
-
+                    pos_tmp = taa.get_position()
+                    package += pack('ifff',-1,pos_tmp[0][0],pos_tmp[0][1], pos_tmp[1] )
                 #envia las mierdas
                 for taa in self.clientes:
                     try:
@@ -111,6 +120,7 @@ class mainProcess(Thread):
                         print "remove 2"
                         taa.remove()
                         self.clientes.remove(taa)
+
                 timeSleep = 0.02 - (t_delta / 1000.0 )
                 if timeSleep > 0.0:
                     time.sleep(timeSleep)
@@ -120,6 +130,7 @@ class Cliente(Thread):
         self.bullet = bullet
         self.world = world
         self.player = self.set_box2d()
+        self.player.body.userData = self
         self.socket = socket_cliente
         self.datos = datos_cliente
         #send id
@@ -218,12 +229,12 @@ class Cliente(Thread):
                 position_info[0] -= 80*math.sin(self.player.body.angle)
                 position_info[1] += 80*math.cos(self.player.body.angle)
                 print "creando bala"
-                self.bullet.append([self.player.body.position, self.world.CreateDynamicBody(
+                self.bullet.append(disparos(self.player.body.position, self.world.CreateDynamicBody(
                     position=(self.player.body.position[0]-(math.sin(self.player.body.angle)*0.8),self.player.body.position[1]+(math.cos(self.player.body.angle)*0.8)),
                     bullet=True,angle = self.player.body.angle,  angularDamping=5.0, linearDamping= 0.0,
                     fixtures=b2FixtureDef(shape=b2CircleShape(radius=(0.16/1.4)), density=50.0),
-                    linearVelocity=(position_info))]
-                )
+                    linearVelocity=(position_info))))
+
     def remove(self):
         self.world.DestroyBody(self.player.body)
         #return self.status
@@ -251,7 +262,7 @@ if __name__ == '__main__':
     server = socket.socket(socket.SOCK_DGRAM)
     global clientes
     clientes = []
-    maestro = mainProcess(clientes, bullet)
+    maestro = mainProcess(clientes, bullet, borrar)
     maestro.start()
     server.bind(("", 8003))
     server.listen(5)
