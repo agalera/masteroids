@@ -14,10 +14,12 @@ class myContactListener(b2ContactListener):
     def PostSolve(self, var, var2):
 
         if var.fixtureA.body.bullet == True:
+            print "remove A"
             self.borrar.append(var.fixtureA.body)
         else:
             var.fixtureA.body.userData.recv_damage(var2.normalImpulses[0])
         if var.fixtureB.body.bullet == True:
+            print "remove B"
             self.borrar.append(var.fixtureB.body)
         else:
             var.fixtureB.body.userData.recv_damage(var2.normalImpulses[0]*2)

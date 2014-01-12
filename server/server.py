@@ -13,8 +13,10 @@ from struct import pack, unpack
 from threading import Thread
 from Box2D import *
 import math
+from random import randint
 
 from clases.disparos import disparos
+from clases.asteroids import asteroids
 from clases.myContactListener import myContactListener
 from clases.myDestructionListener import myDestructionListener
 
@@ -58,11 +60,12 @@ def updateFPS():
         last_time = time.time()
         #print last_time
 class mainProcess(Thread):
-    def __init__(self, clientes, bullet, borrar):
+    def __init__(self, clientes, bullet, borrar, asteroids_list):
         Thread.__init__(self)
         self.clientes = clientes
         self.bullet = bullet
         self.borrar = borrar
+        self.asteroids_list = asteroids_list
 
     def run(self):
         global t_delta
@@ -81,12 +84,17 @@ class mainProcess(Thread):
                 t_delta = getDelta()
                 timeStep = t_delta*0.0004
                 #borrar bullet colisionados
-                for taa in self.borrar:
-                    self.bullet.remove(taa.userData)
-                    print self.bullet
-                    world.DestroyBody(taa)
-                    self.borrar.remove(taa)
-                    print "remove time"
+                if (len(self.borrar) != 0):
+                    for taa in list(set(self.borrar)):
+                        self.bullet.remove(taa.userData)
+                        print self.bullet
+                        world.DestroyBody(taa)
+                        self.borrar.remove(taa)
+                        print "remove time"
+                if (len(self.borrar) != 0):
+                    print "duplicate items"
+                    for taa in self.borrar:
+                        self.borrar.remove(taa)
                 #clear bullet much range
                 for taa in self.bullet:
                     actual_pos = taa.get_position()
@@ -102,7 +110,7 @@ class mainProcess(Thread):
                 world.Step(timeStep, vel_iters, pos_iters)
                 world.ClearForces()
                 #crea un paquete
-                package = pack('i', int(len(self.clientes)+len(self.bullet)))
+                package = pack('i', int(len(self.clientes)+len(self.bullet)+len(self.asteroids_list)))
                 for taa in self.clientes:
                     try:
                         tmp = taa.get_position()
@@ -112,6 +120,10 @@ class mainProcess(Thread):
                 for taa in self.bullet:
                     pos_tmp = taa.get_position()
                     package += pack('ifff',-1,pos_tmp[0][0],pos_tmp[0][1], pos_tmp[1] )
+
+                for taa in self.asteroids_list:
+                    pos_tmp = taa.get_position()
+                    package += pack('ifff',-2,pos_tmp[0][0],pos_tmp[0][1], pos_tmp[1] )
                 #envia las mierdas
                 for taa in self.clientes:
                     try:
@@ -182,6 +194,10 @@ class Cliente(Thread):
     def recv_damage(self,dmg):
         self.hp -= dmg
         self.change_hp = True
+        if self.hp < 0:
+            return True
+        else:
+            return False
 
     def use_energy(self,value):
         if (self.energy > value):
@@ -253,16 +269,21 @@ if __name__ == '__main__':
     updateFPS()
     t_delta = getDelta()
     bullet = []
-
+    asteroids_list = []
     myListener = myContactListener(borrar)
     myDestructor = myDestructionListener()
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
+
+    #generate asteroids
+    for taa in range(50):
+        asteroids_list.append(asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100]))
+
     # Se prepara el servidor
     #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server = socket.socket(socket.SOCK_DGRAM)
     global clientes
     clientes = []
-    maestro = mainProcess(clientes, bullet, borrar)
+    maestro = mainProcess(clientes, bullet, borrar, asteroids_list)
     maestro.start()
     server.bind(("", 8003))
     server.listen(5)
