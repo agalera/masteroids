@@ -12,7 +12,7 @@ size_tile = 0.16
 
 class player:
     def __init__ (self, global_DL):
-        self.position = [0.0,0.0, 0.0]
+        self.position = [0.0, 0.0, 0.0]
         self.global_DL = global_DL
 
     def add_damage(self, damage):

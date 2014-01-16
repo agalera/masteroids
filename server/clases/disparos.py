@@ -11,11 +11,7 @@ class disparos:
     def get_body(self):
         return self.body
     def recv_damage(self, fl):
-        self.hp -= fl
-        if self.hp < 0:
-            return True
-        else:
-            return False
+        pass
     def get_position(self):
         return [self.body.position, self.body.angle]
     def get_init_post(self):

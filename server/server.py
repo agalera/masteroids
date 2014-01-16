@@ -60,11 +60,12 @@ def updateFPS():
         last_time = time.time()
         #print last_time
 class mainProcess(Thread):
-    def __init__(self, clientes, bullet, borrar, asteroids_list):
+    def __init__(self, clientes, bullet, borrar_bullet ,borrar_asteroids, asteroids_list):
         Thread.__init__(self)
         self.clientes = clientes
         self.bullet = bullet
-        self.borrar = borrar
+        self.borrar_bullet = borrar_bullet
+        self.borrar_asteroids = borrar_asteroids
         self.asteroids_list = asteroids_list
 
     def run(self):
@@ -83,18 +84,31 @@ class mainProcess(Thread):
                 updateFPS()
                 t_delta = getDelta()
                 timeStep = t_delta*0.0004
-                #borrar bullet colisionados
-                if (len(self.borrar) != 0):
-                    for taa in list(set(self.borrar)):
+                #borrar_bullet bullet colisionados
+                if (len(self.borrar_bullet) != 0):
+                    for taa in list(set(self.borrar_bullet)):
                         self.bullet.remove(taa.userData)
-                        print self.bullet
                         world.DestroyBody(taa)
-                        self.borrar.remove(taa)
+                        self.borrar_bullet.remove(taa)
                         print "remove time"
-                if (len(self.borrar) != 0):
+                if (len(self.borrar_bullet) != 0):
                     print "duplicate items"
-                    for taa in self.borrar:
-                        self.borrar.remove(taa)
+                    for taa in self.borrar_bullet:
+                        self.borrar_bullet.remove(taa)
+
+                #borrar_bullet bullet colisionados
+                if (len(self.borrar_asteroids) != 0):
+                    for taa in list(set(self.borrar_asteroids)):
+                        self.asteroids_list.remove(taa.userData)
+                        world.DestroyBody(taa)
+                        self.borrar_asteroids.remove(taa)
+                        print "remove time2"
+                if (len(self.borrar_asteroids) != 0):
+                    print "duplicate items2"
+                    for taa in self.borrar_asteroids:
+                        self.borrar_asteroids.remove(taa)
+
+
                 #clear bullet much range
                 for taa in self.bullet:
                     actual_pos = taa.get_position()
@@ -118,12 +132,12 @@ class mainProcess(Thread):
                     except:
                         pass
                 for taa in self.bullet:
-                    pos_tmp = taa.get_position()
-                    package += pack('ifff',-1,pos_tmp[0][0],pos_tmp[0][1], pos_tmp[1] )
+                    pos_tmp, angle_tmp = taa.get_position()
+                    package += pack('ifff',-1,pos_tmp[0],pos_tmp[1], angle_tmp)
 
                 for taa in self.asteroids_list:
-                    pos_tmp = taa.get_position()
-                    package += pack('ifff',-2,pos_tmp[0][0],pos_tmp[0][1], pos_tmp[1] )
+                    pos_tmp, angle_tmp = taa.get_position()
+                    package += pack('ifff',-2,pos_tmp[0],pos_tmp[1], angle_tmp)
                 #envia las mierdas
                 for taa in self.clientes:
                     try:
@@ -133,9 +147,11 @@ class mainProcess(Thread):
                         taa.remove()
                         self.clientes.remove(taa)
 
+                #esto es para limitar los fps, esta mal hecho
                 timeSleep = 0.02 - (t_delta / 1000.0 )
                 if timeSleep > 0.0:
                     time.sleep(timeSleep)
+
 class Cliente(Thread):
     def __init__(self, socket_cliente, datos_cliente, world, bullet):
         Thread.__init__(self)
@@ -209,11 +225,14 @@ class Cliente(Thread):
 
     def set_box2d(self):
         tmp = self.world.CreateDynamicBody(position=(0,0),angularDamping=30.0, linearDamping= 1.0, angle= 0)
-        return tmp.CreatePolygonFixture(box=(0.16*0.94,0.16*0.94),density=1, friction= 6)
+        #return tmp.CreatePolygonFixture(box=(0.16*0.94,0.16*0.94),density=1, friction= 6)
+        return tmp.CreatePolygonFixture(vertices=[(-0.08*2,-0.08*2),(0.0,0.08*2),(0.08*2,-0.08*2)],density=1, friction= 6)
 
     def get_position(self):
         return [self.datos[1], self.player.body.position[0],self.player.body.position[1],self.player.body.angle]
     def move(self, t_delta):
+
+        #algunas funciones de movimiento no tienen en cuenta el delta, dejalo asi y luego lo arreglamos mas adelante
         if (self.block_fire >= 0):
             self.block_fire -= t_delta
         if (self.energy < 100):
@@ -265,25 +284,26 @@ if __name__ == '__main__':
     lastFrame = time.time()
     timeStep = 1.0 / 160
     vel_iters, pos_iters = 6, 2
-    borrar = []
+    borrar_bullet = []
+    borrar_asteroids = []
     updateFPS()
     t_delta = getDelta()
     bullet = []
     asteroids_list = []
-    myListener = myContactListener(borrar)
+    myListener = myContactListener(borrar_bullet)
     myDestructor = myDestructionListener()
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
 
     #generate asteroids
-    for taa in range(50):
-        asteroids_list.append(asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100]))
+    for taa in range(200):
+        asteroids_list.append(asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids))
 
     # Se prepara el servidor
     #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server = socket.socket(socket.SOCK_DGRAM)
     global clientes
     clientes = []
-    maestro = mainProcess(clientes, bullet, borrar, asteroids_list)
+    maestro = mainProcess(clientes, bullet, borrar_bullet, borrar_asteroids,  asteroids_list)
     maestro.start()
     server.bind(("", 8003))
     server.listen(5)

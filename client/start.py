@@ -36,7 +36,7 @@ bullet = []
 joints = []
 status_global = 0
 zoom = 3.0
-
+naves_new = []
 
 # Create a dynamic body at (0,4)
 
@@ -200,9 +200,6 @@ def initFun():
     global trenecito
     global last_damage
     global naves
-    #thread sockets
-    online = update_dates()
-    online.start()
 
     naves = []
     last_total_kills = -1
@@ -233,6 +230,10 @@ def initFun():
     textures.append(loadImage('assets/frases1.png'))
 
     player = player(global_DL)
+        #thread sockets
+    online = update_dates(player)
+    online.start()
+
     enable_vsync()
     getDelta()
 
@@ -375,16 +376,16 @@ def RenderGLFun():
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
         naves = naves_new
-        try:
-            for taa in naves:
-                if taa[0] == player_id:
-                    try:
-                        player.set_position(taa)
-                    except:
-                        print "aun no existe player"
-        except:
-            print "malformed package"
-            print naves
+        #try:
+        for taa in naves:
+            if taa[0] == player_id:
+                try:
+                    player.set_position(taa)
+                except:
+                    print "aun no existe player"
+        #except:
+        #    print "malformed package"
+        #    print naves
         create_camera()
         setupTexture(6)
         background()
@@ -422,7 +423,10 @@ def draw_nave(position):
     #        return False
     glTranslatef( position[1] , position[2], 0.0)
     glRotate(math.degrees(position[3]), 0, 0, 1)
-    glCallList(global_DL+1)
+    if position[0] < 253:
+        glCallList(global_DL+position[0]+4)
+    else:
+        glCallList(global_DL)
     glRotate(math.degrees(position[3]), 0, 0, -1)
     glTranslatef( -position[1] , -position[2], -0.0)
 
@@ -465,11 +469,12 @@ def recvpackage(socket_cliente,size_package):
 
 
 class update_dates(Thread):
-    def __init__(self):
+    def __init__(self, player):
         Thread.__init__(self)
         #self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.s = socket.socket(socket.SOCK_DGRAM)
         self.s.connect((sys.argv[1], int(sys.argv[2])))
+        self.player = player
         #mode
         mode = 1
         self.s.send(pack('i',mode))
@@ -490,26 +495,33 @@ class update_dates(Thread):
                 cambios = False
 
     def update_info(self):
+        try:
+            numero_datos = unpack("i", recvpackage(self.s, 4))[0]
+            if (numero_datos < 0):
+                #hp
+                if numero_datos == -1:
+                    print "hp",unpack("f", recvpackage(self.s, 4))
+                #energy
+                elif numero_datos == -2:
+                    print "energy",unpack("f", recvpackage(self.s, 4))
+                #hp y energy
+                elif numero_datos == -3:
+                    print "hp, energy",unpack("ff", recvpackage(self.s, 8))
+                return True
+            else:
+                tmp = []
+                for taa in range(int(numero_datos)):
+                    #tmp2 = unpack("ifff", recvpackage(self.s, 16))
+                    tmp2 = unpack("ifff", recvpackage(self.s, 16))
+                    player_pos = player.get_position()
 
-        numero_datos = unpack("i", recvpackage(self.s, 4))[0]
-        if (numero_datos < 0):
-            #hp
-            if numero_datos == -1:
-                print "hp",unpack("f", self.s.recv(4))
-            #energy
-            elif numero_datos == -2:
-                print "energy",unpack("f", self.s.recv(4))
-            #hp y energy
-            elif numero_datos == -3:
-                print "hp, energy",unpack("ff", self.s.recv(8))
+                    if(math.hypot(player_pos[0] - tmp2[1], player_pos[1] - tmp2[2])<25):
+                        tmp.append(tmp2)
+                return tmp
+        except:
+            print "error network"
+            print "len", numero_datos
             return True
-        else:
-            tmp = []
-            for taa in range(int(numero_datos)):
-                #tmp2 = unpack("ifff", recvpackage(self.s, 16))
-                tmp2 = unpack("ifff", self.s.recv(16))
-                tmp.append(tmp2)
-            return tmp
 
 if __name__ == '__main__':
     glutInit()
