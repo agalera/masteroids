@@ -296,7 +296,7 @@ if __name__ == '__main__':
 
     #generate asteroids
     for taa in range(200):
-        asteroids_list.append(asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids))
+        asteroids_list.append(asteroids(world, [randint(-1000,1000)/100,randint(-1000,1000)/100], borrar_asteroids))
 
     # Se prepara el servidor
     #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
