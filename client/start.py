@@ -531,6 +531,7 @@ class update_dates(Thread):
         while True:
             global naves_new
             tmp = self.update_info()
+            RenderGLFun()
             if (tmp != True):
                 naves_new = tmp
             if cambios:
@@ -568,7 +569,6 @@ class update_dates(Thread):
             print "error network"
             print "len", numero_datos
             return True
-
 if __name__ == '__main__':
     glutInit()
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
@@ -580,8 +580,8 @@ if __name__ == '__main__':
     #glutSpecialUpFunc(ControlFlechasUp)
     #glutTimerFunc(16,update, 1)
 
-    glutDisplayFunc(RenderGLFun)
-    glutIdleFunc(RenderGLFun)
+    #glutDisplayFunc(RenderGLFun)
+    #glutIdleFunc(RenderGLFun)
     glutReshapeFunc(reshapeFun)
     glutKeyboardFunc(ControlTeclado)
     glutKeyboardUpFunc(ControlTecladoUp)
