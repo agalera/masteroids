@@ -1,12 +1,11 @@
 from __future__ import division
 
 import math
-from Box2D import *
 import copy
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-import clases.audio
+#import clases.audio
 
 size_tile = 0.16
 
