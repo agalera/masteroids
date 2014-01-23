@@ -193,21 +193,11 @@ def initFun():
 
     global global_DL
     global vida_DL
-    global last_total_kills
-    global total_kills_DL
-    global total_kills
-    global last_kill
     global trenecito
-    global last_damage
     global naves
 
     naves = []
-    last_total_kills = -1
-    last_kill = [-1,-1]
-    last_damage = 0.0
-    total_kills = 0
     vida_DL = glGenLists(1)
-    total_kills_DL = glGenLists(1)
     global_DL = glGenLists(256)
     print "aqui", global_DL
     tmp2 = 0
@@ -402,6 +392,16 @@ def RenderGLFun():
         glLoadIdentity()
         #GUI
 
+        glPushMatrix()
+        glLoadIdentity()
+
+        setupTexture(1)
+        #draw_shield()
+        draw_hp()
+        #draw_energy()
+
+
+        glPopMatrix()
         #FIN GUI
         glPopMatrix()
         #draw_select()
@@ -410,6 +410,51 @@ def RenderGLFun():
         #timeSleep = 0.03 - (t_delta / 1000.0 )
         #if timeSleep > 0.0:
         #    time.sleep(timeSleep)
+
+def draw_hp():
+    global last_damage
+    hp = player.get_hp()
+
+    if hp != False:
+        if hp > 0.0:
+            glNewList(vida_DL, GL_COMPILE)
+            draw_hp_opengl(hp)
+            glEndList()
+        else:
+            global status_global
+            status_global = 3
+    glCallList(vida_DL)
+
+def draw_hp_opengl(bxs):
+
+    tile = 82
+    size_tile = 0.08
+    #v_object_select = player.get_position()[0]
+    #print v_object_select
+    bx = zoom - bxs
+    by = zoom-0.2
+
+    texture_info_temp = [int(tile), 0];
+    textureXOffset = float(texture_info_temp[0]/16.0)+0.001
+    textureYOffset = float(16 - int(texture_info_temp[0]/16)/16.0)-0.001
+    textureHeight  = float(0.060)
+    textureWidth   = float(0.060)
+    glTranslatef(bx,by, 0)
+    glBegin(GL_QUADS)
+    glTexCoord2f(textureXOffset, textureYOffset - textureHeight)
+    glVertex3f(-0.1, -0.1, 0)
+
+    glTexCoord2f(textureXOffset + textureWidth, textureYOffset - textureHeight)
+    glVertex3f(+0.1, -0.1, 0)
+
+    glTexCoord2f(textureXOffset + textureWidth, textureYOffset)
+    glVertex3f(+0.1, +0.1, 0)
+
+    glTexCoord2f(textureXOffset,textureYOffset)
+    glVertex3f(-0.1, + 0.1, 0)
+
+    glEnd()
+    glTranslatef(-bx,-by, 0)
 
 def draw_naves():
     for taa in list(naves):
@@ -455,7 +500,7 @@ def updateFPS():
 def recvpackage(socket_cliente,size_package):
     package = socket_cliente.recv(int(size_package))
     if (len(package) != size_package):
-        print "fragment buffer"
+        #print "fragment buffer"
         Esperando = True
         while Esperando:
             if (len(package) != size_package):
@@ -500,13 +545,14 @@ class update_dates(Thread):
             if (numero_datos < 0):
                 #hp
                 if numero_datos == -1:
-                    print "hp",unpack("f", recvpackage(self.s, 4))
+                    player.set_hp(unpack("f", recvpackage(self.s, 4))[0])
                 #energy
                 elif numero_datos == -2:
-                    print "energy",unpack("f", recvpackage(self.s, 4))
+                    player.set_energy(unpack("f", recvpackage(self.s, 4))[0])
                 #hp y energy
                 elif numero_datos == -3:
-                    print "hp, energy",unpack("ff", recvpackage(self.s, 8))
+                    player.set_hp(unpack("f", recvpackage(self.s, 4))[0])
+                    player.set_energy(unpack("f", recvpackage(self.s, 4))[0])
                 return True
             else:
                 tmp = []
