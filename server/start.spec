@@ -1,5 +1,5 @@
 # -*- mode: python -*-
-a = Analysis(['start.py'],
+a = Analysis(['server.py'],
              pathex=['C:\\Users\\user\\workspace\\pstop'],
              hiddenimports=[],
              hookspath=None,
