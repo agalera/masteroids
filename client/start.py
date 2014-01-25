@@ -67,13 +67,26 @@ def loadImage(imageName):
     )
     return ID
 
-def create_camera():
-    glRotate(0, 0, 0, 0)
-    glRotate(0, 1, 0, 0)
-    glRotate(0, 0, 0, 1)
-    camera = player.get_position()
-    glTranslate( -camera[0] , -camera[1], 0)
-    return camera
+def create_camera(zoom_lock):
+    glLoadIdentity()
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    if(zoom_lock):
+        zoom_tmp = 3.0
+    else:
+        zoom_tmp = zoom
+    if (aspect >= 1.0):
+        glOrtho(-zoom_tmp * aspect, zoom_tmp * aspect, -zoom_tmp, zoom_tmp, -zoom_tmp, zoom_tmp)
+    else:
+        print "wtf"
+        glOrtho(-zoom_tmp, zoom_tmp, -zoom_tmp / aspect, zoom_tmp / aspect, -zoom_tmp, zoom_tmp)
+    glMatrixMode(GL_MODELVIEW)
+    if (zoom_lock == False):
+        glRotate(0, 0, 0, 0)
+        glRotate(0, 1, 0, 0)
+        glRotate(0, 0, 0, 1)
+        camera = player.get_position()
+        glTranslate( -camera[0] , -camera[1], 0)
 
 def ControlRatonPos(x,y):
     global radians
@@ -86,10 +99,10 @@ def ControlRaton(key,leave,x,y):
         ControlRatonPos(x,y)
         wasd[5][key] = not leave
     if (key == 3):
-        zoom -= 0.08
+        zoom -= 0.32
         reshapeFun(resolution[0], resolution[1])
     if (key == 4):
-        zoom += 0.08
+        zoom += 0.32
         reshapeFun(resolution[0], resolution[1])
 
 
@@ -262,6 +275,7 @@ def draw_pantallazo(num):
 def reshapeFun(wi,he):
     global resolution
     resolution = [wi,he]
+    global aspect
     aspect = 1.9
     aspect = resolution[0] / resolution[1]
     glViewport(0, 0, wi, he)
@@ -275,6 +289,7 @@ def reshapeFun(wi,he):
         print "wtf"
         glOrtho(-zoom, zoom, -zoom / aspect, zoom / aspect, -zoom, zoom)
     glMatrixMode(GL_MODELVIEW)
+    print zoom
     #glMatrixMode(GL_MODELVIEW);
 
     #if w>h:
@@ -376,7 +391,11 @@ def RenderGLFun():
         #except:
         #    print "malformed package"
         #    print naves
-        create_camera()
+
+
+
+        create_camera(False)
+
         setupTexture(6)
         background()
         #draw time (optional)
@@ -388,22 +407,15 @@ def RenderGLFun():
         #player.draw() #components.py:31 opengl
         #setupTexture(2)
 
-        glPushMatrix()
-        glLoadIdentity()
         #GUI
-
-        glPushMatrix()
-        glLoadIdentity()
-
+        create_camera(True)
         setupTexture(1)
         #draw_shield()
         draw_hp()
         #draw_energy()
 
-
-        glPopMatrix()
         #FIN GUI
-        glPopMatrix()
+
         #draw_select()
         #go to gpu
         glutSwapBuffers()
@@ -418,7 +430,7 @@ def draw_hp():
     if hp != False:
         if hp > 0.0:
             glNewList(vida_DL, GL_COMPILE)
-            draw_hp_opengl(hp)
+            draw_hp_opengl(2)
             glEndList()
         else:
             global status_global
@@ -427,12 +439,12 @@ def draw_hp():
 
 def draw_hp_opengl(bxs):
 
-    tile = 82
+    tile = 1
     size_tile = 0.08
     #v_object_select = player.get_position()[0]
     #print v_object_select
-    bx = zoom - bxs
-    by = zoom-0.2
+    bx = - 3.9
+    by = 2.9
 
     texture_info_temp = [int(tile), 0];
     textureXOffset = float(texture_info_temp[0]/16.0)+0.001
@@ -531,7 +543,6 @@ class update_dates(Thread):
         while True:
             global naves_new
             tmp = self.update_info()
-            RenderGLFun()
             if (tmp != True):
                 naves_new = tmp
             if cambios:
@@ -569,6 +580,7 @@ class update_dates(Thread):
             print "error network"
             print "len", numero_datos
             return True
+
 if __name__ == '__main__':
     glutInit()
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
@@ -580,8 +592,8 @@ if __name__ == '__main__':
     #glutSpecialUpFunc(ControlFlechasUp)
     #glutTimerFunc(16,update, 1)
 
-    #glutDisplayFunc(RenderGLFun)
-    #glutIdleFunc(RenderGLFun)
+    glutDisplayFunc(RenderGLFun)
+    glutIdleFunc(RenderGLFun)
     glutReshapeFunc(reshapeFun)
     glutKeyboardFunc(ControlTeclado)
     glutKeyboardUpFunc(ControlTecladoUp)
