@@ -513,15 +513,15 @@ def recvpackage(socket_cliente,size_package):
     package = socket_cliente.recv(int(size_package))
     if (len(package) != size_package):
         #print "fragment buffer"
-        Esperando = True
-        while Esperando:
+        esperando = True
+        while esperando:
             if (len(package) != size_package):
                 package = package + socket_cliente.recv(size_package - len(package))
                 if (package == ""):
                     print "conexion broken"
-                    break
+                    esperando = False
             else:
-                Esperando = False
+                esperando = False
     return package
 
 
