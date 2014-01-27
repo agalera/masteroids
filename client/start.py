@@ -206,11 +206,13 @@ def initFun():
 
     global global_DL
     global vida_DL
+    global energy_DL
     global trenecito
     global naves
 
     naves = []
     vida_DL = glGenLists(1)
+    energy_DL = glGenLists(1)
     global_DL = glGenLists(256)
     print "aqui", global_DL
     tmp2 = 0
@@ -307,6 +309,7 @@ def setupTexture(imageID):
     #texCoordsFrame1 = [0.32]
     #glTexCoordPointer(2, GL_FLOAT, 0, textures[imageID])
     #glTexCoordPointer(2, GL_FLOAT, 1000, 1000)
+
 def new_frame(init):
     if init == True:
         glMatrixMode(GL_TEXTURE)
@@ -317,6 +320,7 @@ def new_frame(init):
         glMatrixMode(GL_TEXTURE)
         glPopMatrix()
         glMatrixMode(GL_MODELVIEW)
+
 def background():
     texture_info_temp = 2
     textureXOffset = 1
@@ -412,7 +416,7 @@ def RenderGLFun():
         setupTexture(1)
         #draw_shield()
         draw_hp()
-        #draw_energy()
+        draw_energy()
 
         #FIN GUI
 
@@ -426,25 +430,34 @@ def RenderGLFun():
 def draw_hp():
     global last_damage
     hp = player.get_hp()
-
     if hp != False:
         if hp > 0.0:
             glNewList(vida_DL, GL_COMPILE)
-            draw_hp_opengl(2)
+            draw_bar_opengl(1,hp)
             glEndList()
         else:
             global status_global
             status_global = 3
     glCallList(vida_DL)
 
-def draw_hp_opengl(bxs):
+def draw_energy():
+    global last_damage
+    energy = player.get_energy()
+    if energy != False:
+        if energy > 0.0:
+            glNewList(energy_DL, GL_COMPILE)
+            draw_bar_opengl(2,energy)
+            glEndList()
+        else:
+            global status_global
+            status_global = 3
+    glCallList(energy_DL)
 
-    tile = 1
+def draw_bar_opengl(tile, value):
+    x = value / 100.0
     size_tile = 0.08
-    #v_object_select = player.get_position()[0]
-    #print v_object_select
-    bx = - 3.9
-    by = 2.9
+    bx = - 1.5 * (aspect*2)
+    by = 3.0 - tile/10.0
 
     texture_info_temp = [int(tile), 0];
     textureXOffset = float(texture_info_temp[0]/16.0)+0.001
@@ -454,16 +467,16 @@ def draw_hp_opengl(bxs):
     glTranslatef(bx,by, 0)
     glBegin(GL_QUADS)
     glTexCoord2f(textureXOffset, textureYOffset - textureHeight)
-    glVertex3f(-0.1, -0.1, 0)
+    glVertex3f(0.0, 0.0, 0)
 
     glTexCoord2f(textureXOffset + textureWidth, textureYOffset - textureHeight)
-    glVertex3f(+0.1, -0.1, 0)
+    glVertex3f(x, 0.0, 0)
 
     glTexCoord2f(textureXOffset + textureWidth, textureYOffset)
-    glVertex3f(+0.1, +0.1, 0)
+    glVertex3f(x, +0.1, 0)
 
     glTexCoord2f(textureXOffset,textureYOffset)
-    glVertex3f(-0.1, + 0.1, 0)
+    glVertex3f(0.0, +0.1, 0)
 
     glEnd()
     glTranslatef(-bx,-by, 0)
@@ -564,7 +577,6 @@ class update_dates(Thread):
             else:
                 tmp = []
                 for taa in range(int(numero_datos)):
-                    #tmp2 = unpack("ifff", recvpackage(self.s, 16))
                     tmp2 = unpack("ifff", recvpackage(self.s, 16))
                     player_pos = player.get_position()
 
