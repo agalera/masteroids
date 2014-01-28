@@ -191,6 +191,16 @@ def ControlTecladoUp(key,x,y):
 def draw_posible_options():
     Lchunk[0].check_object(v_object_select)
 
+def glut_print( x,  y,  font,  text, r,  g , b , a):
+
+    #glEnable(GL_BLEND)
+    glColor3f( r,  g , b)
+    glRasterPos2d(x,y+0.02)
+    #glWindowPos2d(x,y)
+    for ch in text :
+        glutBitmapCharacter( font , ctypes.c_int( ord(ch) ) )
+    glColor3f( 1, 1, 1)
+
 def initFun():
     print "initFun"
     glEnable(GL_AUTO_NORMAL)
@@ -404,10 +414,9 @@ def RenderGLFun():
         background()
         #draw time (optional)
         setupTexture(0)
-        try:
-            draw_naves()
-        except:
-            print "malformed package"
+
+        draw_naves()
+
         #player.draw() #components.py:31 opengl
         #setupTexture(2)
 
@@ -417,7 +426,6 @@ def RenderGLFun():
         #draw_shield()
         draw_hp()
         draw_energy()
-
         #FIN GUI
 
         #draw_select()
@@ -465,6 +473,7 @@ def draw_bar_opengl(tile, value):
     textureHeight  = float(0.060)
     textureWidth   = float(0.060)
     glTranslatef(bx,by, 0)
+
     glBegin(GL_QUADS)
     glTexCoord2f(textureXOffset, textureYOffset - textureHeight)
     glVertex3f(0.0, 0.0, 0)
@@ -480,6 +489,8 @@ def draw_bar_opengl(tile, value):
 
     glEnd()
     glTranslatef(-bx,-by, 0)
+
+    glut_print( bx , by , GLUT_BITMAP_HELVETICA_10 , str(int(value))+" / 100" , 0.0 , 1.0 , 1.0 , 1.0 )
 
 def draw_naves():
     for taa in list(naves):
@@ -522,17 +533,28 @@ def updateFPS():
         last_time = time.time()
         #print last_time
 
+#def recvpackage(socket_cliente,size_package):
+#    package = ''
+#    while len(package) < size_package:
+#        chunk = socket_cliente.recv(size_package - len(package))
+#        if chunk == '':
+#            print 'Connection broken'  # raise ...
+#            break
+#        package += chunk
+#    return package
 def recvpackage(socket_cliente,size_package):
-    package = ''
-    while len(package) < size_package:
-        chunk = socket_cliente.recv(size_package - len(package))
-        if chunk == '':
-            print 'Connection broken'  # raise ...
-            break
-        package += chunk
+    package = socket_cliente.recv(int(size_package))
+    if (len(package) != size_package):
+        Esperando = True
+        while Esperando:
+            if (len(package) != size_package):
+                package = package + socket_cliente.recv(size_package - len(package))
+                if (package == ""):
+                    print "conexion broken"
+                    break
+            else:
+                Esperando = False
     return package
-
-
 class update_dates(Thread):
     def __init__(self, player):
         Thread.__init__(self)
