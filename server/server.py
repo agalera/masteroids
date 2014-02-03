@@ -8,7 +8,6 @@ import hashlib
 import time
 import datetime
 import socket
-import smtplib  #lib send mails
 from struct import pack, unpack
 from threading import Thread
 from Box2D import *
@@ -99,7 +98,7 @@ class mainProcess(Thread):
                 #borrar_bullet bullet colisionados
                 if (len(self.borrar_asteroids) != 0):
                     for taa in list(set(self.borrar_asteroids)):
-                        self.asteroids_dic.remove(taa.userData)
+                        self.asteroids_dic.pop(taa.userData.get_id(), None)
                         world.DestroyBody(taa)
                         self.borrar_asteroids.remove(taa)
                         print "remove time2"
@@ -304,8 +303,8 @@ if __name__ == '__main__':
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
 
     #generate asteroids
-    for taa in range(2000):
-        asteroids_dic[taa] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids)
+    for ids in range(2000):
+        asteroids_dic[ids] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids, ids)
 
     # Se prepara el servidor
     #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
