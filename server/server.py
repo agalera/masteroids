@@ -60,13 +60,13 @@ def updateFPS():
         last_time = time.time()
         #print last_time
 class mainProcess(Thread):
-    def __init__(self, clientes, bullet, borrar_bullet ,borrar_asteroids, asteroids_list):
+    def __init__(self, clientes, bullet, borrar_bullet ,borrar_asteroids, asteroids_dic):
         Thread.__init__(self)
         self.clientes = clientes
         self.bullet = bullet
         self.borrar_bullet = borrar_bullet
         self.borrar_asteroids = borrar_asteroids
-        self.asteroids_list = asteroids_list
+        self.asteroids_dic = asteroids_dic
 
     def run(self):
         global t_delta
@@ -99,7 +99,7 @@ class mainProcess(Thread):
                 #borrar_bullet bullet colisionados
                 if (len(self.borrar_asteroids) != 0):
                     for taa in list(set(self.borrar_asteroids)):
-                        self.asteroids_list.remove(taa.userData)
+                        self.asteroids_dic.remove(taa.userData)
                         world.DestroyBody(taa)
                         self.borrar_asteroids.remove(taa)
                         print "remove time2"
@@ -124,7 +124,7 @@ class mainProcess(Thread):
                 world.Step(timeStep, vel_iters, pos_iters)
                 world.ClearForces()
                 #crea un paquete
-                package = pack('i', int(len(self.clientes)+len(self.bullet)+len(self.asteroids_list)))
+                package = pack('i', int(len(self.clientes)+len(self.bullet)+len(self.asteroids_dic)))
                 for taa in self.clientes:
                     try:
                         tmp = taa.get_position()
@@ -135,9 +135,10 @@ class mainProcess(Thread):
                     pos_tmp, angle_tmp = taa.get_position()
                     package += pack('ifff',-1,pos_tmp[0],pos_tmp[1], angle_tmp)
 
-                for taa in self.asteroids_list:
-                    pos_tmp, angle_tmp = taa.get_position()
-                    package += pack('ifff',-2,pos_tmp[0],pos_tmp[1], angle_tmp)
+                for key in self.asteroids_dic.keys():
+                    pos_tmp, angle_tmp = self.asteroids_dic[key].get_position()
+                    package += pack('ifff',-2,pos_tmp[0],pos_tmp[1],0)
+
                 #envia las mierdas
                 for taa in self.clientes:
                     try:
@@ -146,11 +147,10 @@ class mainProcess(Thread):
                         print "remove 2"
                         taa.remove()
                         self.clientes.remove(taa)
-
                 #esto es para limitar los fps, esta mal hecho
-                timeSleep = 0.02 - (t_delta / 1000.0 )
-                if timeSleep > 0.0:
-                    time.sleep(timeSleep)
+#                timeSleep = 0.035 - (t_delta / 1000.0 )
+#                if timeSleep > 0.0:
+#                    time.sleep(timeSleep)
 
 class Cliente(Thread):
     def __init__(self, socket_cliente, datos_cliente, world, bullet):
@@ -159,6 +159,9 @@ class Cliente(Thread):
         self.world = world
         self.player = self.set_box2d()
         self.player.body.userData = self
+        self.massData_default = self.player.body.massData
+        #self.massData_default = b2MassData()
+        #self.player.body.GetMassData(self.massData_default)
         self.socket = socket_cliente
         self.datos = datos_cliente
         #send id
@@ -239,6 +242,12 @@ class Cliente(Thread):
             self.use_energy(-t_delta*0.01)
         if(self.Vactual_info[0] == True):
             if self.use_energy(0.2):
+                massData_tmp = b2MassData()
+                massData_tmp.I = self.massData_default.I * 1.5 #multiply per charge
+                massData_tmp.center = self.massData_default.center
+                massData_tmp.mass = self.massData_default.mass * 1.5 #multiply per charge
+                self.player.body.massData = massData_tmp
+
                 #self.player.body.ApplyLinearImpulse(b2Vec2(0.0,0.0015*t_delta), b2Vec2(self.player.body.position[0],2+self.player.body.position[1]),1)
                 position_info = [0,0]
                 position_info[0] -= (0.3 * math.sin(self.player.body.angle))*16
@@ -289,21 +298,21 @@ if __name__ == '__main__':
     updateFPS()
     t_delta = getDelta()
     bullet = []
-    asteroids_list = []
+    asteroids_dic = dict()
     myListener = myContactListener(borrar_bullet)
     myDestructor = myDestructionListener()
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
 
     #generate asteroids
-    for taa in range(200):
-        asteroids_list.append(asteroids(world, [randint(-1000,1000)/100,randint(-1000,1000)/100], borrar_asteroids))
+    for taa in range(2000):
+        asteroids_dic[taa] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids)
 
     # Se prepara el servidor
     #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server = socket.socket(socket.SOCK_DGRAM)
     global clientes
     clientes = []
-    maestro = mainProcess(clientes, bullet, borrar_bullet, borrar_asteroids,  asteroids_list)
+    maestro = mainProcess(clientes, bullet, borrar_bullet, borrar_asteroids,  asteroids_dic)
     maestro.start()
     server.bind(("", 8003))
     server.listen(5)
