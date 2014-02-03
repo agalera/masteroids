@@ -4,7 +4,7 @@ from random import randint
 
 size_tile = 0.16
 class asteroids:
-    def __init__ (self,world, pos, borrar_asteroids):
+    def __init__ (self,world, pos, borrar_asteroids, ids):
         self.world = world
         self.fixture = self.generate_asteroids(pos)
         self.body = self.fixture.body
@@ -13,6 +13,7 @@ class asteroids:
         self.body.ApplyTorque(randint(-100,100),1)
         self.borrar_asteroids = borrar_asteroids
         self.hp = 10.0
+        self.id = ids
     def generate_asteroids(self, pos):
         tmp = self.world.CreateDynamicBody(position=(pos),bullet=False,angularDamping=0.01, linearDamping= 0.01, angle= 0,linearVelocity=(randint(-10000,10000)/2000,randint(-10000,10000)/2000))
         return tmp.CreateCircleFixture(radius=(size_tile/1.0),density=5, friction= 0)
@@ -22,6 +23,8 @@ class asteroids:
         return self.body.awake
     def touch(self, touch):
         pass
+    def get_id(self):
+        return self.id
     def recv_damage(self, fl):
         self.hp -= fl
         if self.hp < 0:
