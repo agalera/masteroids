@@ -127,16 +127,16 @@ class mainProcess(Thread):
                 for taa in self.clientes:
                     try:
                         tmp = taa.get_position()
-                        package += pack('ifff',tmp[0],tmp[1],tmp[2], tmp[3] )
+                        package += pack('iifff',tmp[0],-1,tmp[1],tmp[2], tmp[3] )
                     except:
                         pass
                 for taa in self.bullet:
                     pos_tmp, angle_tmp = taa.get_position()
-                    package += pack('ifff',-1,pos_tmp[0],pos_tmp[1], angle_tmp)
+                    package += pack('iifff',-1,-1,pos_tmp[0],pos_tmp[1], angle_tmp)
 
                 for key in self.asteroids_dic.keys():
                     pos_tmp, angle_tmp = self.asteroids_dic[key].get_position()
-                    package += pack('ifff',-2,pos_tmp[0],pos_tmp[1],0)
+                    package += pack('iifff',key,-2,pos_tmp[0],pos_tmp[1],0)
 
                 #envia las mierdas
                 for taa in self.clientes:
@@ -267,7 +267,7 @@ class Cliente(Thread):
             self.player.body.ApplyTorque(-0.3,1)
         if(self.Vactual_info[4] == True and self.block_fire <= 0):
             if self.use_energy(10):
-                self.block_fire = 800
+                self.block_fire = 20
                 position_info = copy.copy(self.player.body.linearVelocity)
                 position_info[0] -= 80*math.sin(self.player.body.angle)
                 position_info[1] += 80*math.cos(self.player.body.angle)
@@ -303,7 +303,7 @@ if __name__ == '__main__':
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
 
     #generate asteroids
-    for ids in range(2000):
+    for ids in range(1000):
         asteroids_dic[ids] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids, ids)
 
     # Se prepara el servidor

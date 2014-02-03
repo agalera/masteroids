@@ -56,4 +56,4 @@ class player:
         return self.position
 
     def set_position(self, new_position):
-        self.position = new_position[1:4]
+        self.position = new_position[2:5]

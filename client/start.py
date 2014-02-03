@@ -36,7 +36,7 @@ bullet = []
 joints = []
 status_global = 0
 zoom = 3.0
-naves_new = []
+naves_new = dict()
 
 # Create a dynamic body at (0,4)
 
@@ -220,7 +220,7 @@ def initFun():
     global trenecito
     global naves
 
-    naves = []
+    naves = dict()
     vida_DL = glGenLists(1)
     energy_DL = glGenLists(1)
     global_DL = glGenLists(256)
@@ -231,8 +231,6 @@ def initFun():
         basicas.draw_cube(0.16, tmp2)
         glEndList()
         tmp2 += 1
-
-    naves = []
 
     textures.append(loadImage('assets/stGrid1.png'))
     textures.append(loadImage('assets/player.png'))
@@ -357,6 +355,8 @@ def background():
     glRotate(0, 0, 0, -1)
 
 def RenderGLFun():
+    if len(naves_new) == 0:
+        return
     global status_global
     if status_global == 0 or status_global == 3:
         status_global = 1
@@ -381,6 +381,7 @@ def RenderGLFun():
         global t_delta
         updateFPS()
         t_delta = getDelta()
+
         #update()
         #---- Init Experimental zone ----
         global animate
@@ -395,18 +396,8 @@ def RenderGLFun():
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
         naves = naves_new
-        #try:
-        for taa in naves:
-            if taa[0] == player_id:
-                try:
-                    player.set_position(taa)
-                except:
-                    print "aun no existe player"
-        #except:
-        #    print "malformed package"
-        #    print naves
 
-
+        player.set_position(naves[player_id])
 
         create_camera(False)
 
@@ -493,23 +484,19 @@ def draw_bar_opengl(tile, value):
     glut_print( bx , by , GLUT_BITMAP_HELVETICA_10 , str(int(value))+" / 100" , 0.0 , 1.0 , 1.0 , 1.0 )
 
 def draw_naves():
-    for taa in list(naves):
-            draw_nave(taa)
+    for key in naves.keys():
+        draw_nave(naves[key])
 
 def draw_nave(position):
     size_tile = 0.32
-    #if self.draw_optional:
-    #    x2 = self.masterclass.get_masterclass().get_position()[0][0]
-    #    if (x2+ 6 < self.position[0][0] or self.position[0][0] < x2- 6):
-    #        return False
-    glTranslatef( position[1] , position[2], 0.0)
-    glRotate(math.degrees(position[3]), 0, 0, 1)
-    if position[0] < 253:
-        glCallList(global_DL+position[0]+4)
+    glTranslatef( position[2] , position[3], 0.0)
+    glRotate(math.degrees(position[4]), 0, 0, 1)
+    if position[1] < 253:
+        glCallList(global_DL+position[1]+4)
     else:
         glCallList(global_DL)
-    glRotate(math.degrees(position[3]), 0, 0, -1)
-    glTranslatef( -position[1] , -position[2], -0.0)
+    glRotate(math.degrees(position[4]), 0, 0, -1)
+    glTranslatef( -position[2] , -position[3], -0.0)
 
 def getDelta():
     global lastFrame
@@ -533,28 +520,17 @@ def updateFPS():
         last_time = time.time()
         #print last_time
 
-#def recvpackage(socket_cliente,size_package):
-#    package = ''
-#    while len(package) < size_package:
-#        chunk = socket_cliente.recv(size_package - len(package))
-#        if chunk == '':
-#            print 'Connection broken'  # raise ...
-#            break
-#        package += chunk
-#    return package
 def recvpackage(socket_cliente,size_package):
-    package = socket_cliente.recv(int(size_package))
-    if (len(package) != size_package):
-        Esperando = True
-        while Esperando:
-            if (len(package) != size_package):
-                package = package + socket_cliente.recv(size_package - len(package))
-                if (package == ""):
-                    print "conexion broken"
-                    break
-            else:
-                Esperando = False
+    package = ''
+    while len(package) < size_package:
+        chunk = socket_cliente.recv(size_package - len(package))
+        if chunk == '':
+            print 'Connection broken'  # raise ...
+            break
+        package += chunk
     return package
+
+
 class update_dates(Thread):
     def __init__(self, player):
         Thread.__init__(self)
@@ -597,13 +573,19 @@ class update_dates(Thread):
                     player.set_energy(unpack("f", recvpackage(self.s, 4))[0])
                 return True
             else:
-                tmp = []
+                var = -10
+                tmp = dict()
                 for taa in range(int(numero_datos)):
-                    tmp2 = unpack("ifff", recvpackage(self.s, 16))
+                    tmp2 = unpack("iifff", recvpackage(self.s, 20))
                     player_pos = player.get_position()
 
-                    if(math.hypot(player_pos[0] - tmp2[1], player_pos[1] - tmp2[2])<25):
-                        tmp.append(tmp2)
+                    if(math.hypot(player_pos[0] - tmp2[2], player_pos[1] - tmp2[3])<20):
+                        if tmp2[0] == -2:
+                            ids = var
+                            var -= 1
+                        else:
+                            ids = tmp2[0]
+                        tmp[tmp2[0]] = [ids, tmp2[1], tmp2[2], tmp2[3], tmp2[4]]
                 return tmp
         except:
             print "error network"
@@ -614,7 +596,7 @@ if __name__ == '__main__':
     glutInit()
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
     glutInitWindowSize(resolution[0],resolution[1])
-    glutCreateWindow("DesmadreTeam")
+    glutCreateWindow("Masteroids")
 
     #glutSpecialFunc(ControlFlechas)
 
