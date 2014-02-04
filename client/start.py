@@ -219,7 +219,8 @@ def initFun():
     global energy_DL
     global trenecito
     global naves
-
+    global current_fps
+    current_fps = 0
     naves = dict()
     vida_DL = glGenLists(1)
     energy_DL = glGenLists(1)
@@ -417,6 +418,7 @@ def RenderGLFun():
         #draw_shield()
         draw_hp()
         draw_energy()
+        draw_fps()
         #FIN GUI
 
         #draw_select()
@@ -425,7 +427,10 @@ def RenderGLFun():
         #timeSleep = 0.03 - (t_delta / 1000.0 )
         #if timeSleep > 0.0:
         #    time.sleep(timeSleep)
-
+def draw_fps():
+    bx = 1.5 * (aspect*2)
+    by = 3.0 - 2/10.0
+    glut_print( bx-0.25 , by , GLUT_BITMAP_HELVETICA_10 , str(int(current_fps)), 0.0 , 0.5 , 1.0 , 1.0 )
 def draw_hp():
     global last_damage
     hp = player.get_hp()
@@ -514,11 +519,10 @@ def updateFPS():
     global last_time
     fps += 1
     if time.time() - last_time >= 1:
+        global current_fps
         current_fps = fps / (time.time() - last_time)
-        print current_fps, 'fps'
         fps = 0
         last_time = time.time()
-        #print last_time
 
 def recvpackage(socket_cliente,size_package):
     package = ''
