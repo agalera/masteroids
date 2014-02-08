@@ -192,6 +192,8 @@ class Cliente(Thread):
             if error != errno.WSAEWOULDBLOCK:
                 print "torroscazo"
                 raise "torroscazo"
+        except:
+            pass
             
 
     def send_package(self, package):
