@@ -579,9 +579,10 @@ class update_dates(Thread):
             else:
                 var = -10
                 tmp = dict()
+                player_pos = player.get_position()
                 for taa in range(int(numero_datos)):
                     tmp2 = unpack("iifff", recvpackage(self.s, 20))
-                    player_pos = player.get_position()
+                    
 
                     if(math.hypot(player_pos[0] - tmp2[2], player_pos[1] - tmp2[3])<20):
                         if tmp2[0] == -2:
