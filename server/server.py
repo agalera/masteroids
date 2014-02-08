@@ -13,7 +13,6 @@ from threading import Thread
 from Box2D import *
 import math
 from random import randint
-import errno
 
 from clases.disparos import disparos
 from clases.asteroids import asteroids
@@ -148,10 +147,6 @@ class mainProcess(Thread):
                         print "remove 2"
                         taa.remove()
                         self.clientes.remove(taa)
-                #esto es para limitar los fps, esta mal hecho
-#                timeSleep = 0.035 - (t_delta / 1000.0 )
-#                if timeSleep > 0.0:
-#                    time.sleep(timeSleep)
 
 class Cliente(Thread):
     def __init__(self, socket_cliente, datos_cliente, world, bullet):
@@ -186,12 +181,11 @@ class Cliente(Thread):
                 except:
                     pass
             else:
-                raise "torroscazo"
-        except Exception, (error,message):
-            if error != errno.WSAEWOULDBLOCK:
-                raise "torroscazo"
-        else:
-            raise "torroscazo"
+                print "top else"
+                raise "a tomar por culo"
+
+        except:
+            pass
             
 
     def send_package(self, package):
@@ -208,11 +202,10 @@ class Cliente(Thread):
         if tmp != 0:
             pack_tmp = pack('i', tmp) + pack_tmp
             package += pack_tmp
-
-        try:
-            self.socket.send(package)
-        except:
-            pass
+        value = 0
+        while package:
+	    package = package[self.socket.send(package):]
+        #self.socket.send(package)
 
     def recv_damage(self,dmg):
         self.hp -= dmg
@@ -308,7 +301,7 @@ if __name__ == '__main__':
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
 
     #generate asteroids
-    for ids in range(100):
+    for ids in range(1):
         asteroids_dic[ids] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids, ids)
 
     # Se prepara el servidor
