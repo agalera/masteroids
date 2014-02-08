@@ -222,9 +222,10 @@ def initFun():
     global current_fps
     current_fps = 0
     naves = dict()
+
+    global_DL = glGenLists(256)
     vida_DL = glGenLists(1)
     energy_DL = glGenLists(1)
-    global_DL = glGenLists(256)
     print "aqui", global_DL
     tmp2 = 0
     for taa in range(global_DL,256 + global_DL):
@@ -431,6 +432,7 @@ def draw_fps():
     bx = 1.5 * (aspect*2)
     by = 3.0 - 2/10.0
     glut_print( bx-0.25 , by , GLUT_BITMAP_HELVETICA_10 , str(int(current_fps)), 0.0 , 0.5 , 1.0 , 1.0 )
+
 def draw_hp():
     global last_damage
     hp = player.get_hp()
@@ -496,10 +498,8 @@ def draw_nave(position):
     size_tile = 0.32
     glTranslatef( position[2] , position[3], 0.0)
     glRotate(math.degrees(position[4]), 0, 0, 1)
-    if position[1] < 253:
-        glCallList(global_DL+position[1]+4)
-    else:
-        glCallList(global_DL)
+    glCallList(global_DL+abs(position[1]))
+
     glRotate(math.degrees(position[4]), 0, 0, -1)
     glTranslatef( -position[2] , -position[3], -0.0)
 

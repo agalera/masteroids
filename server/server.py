@@ -13,6 +13,7 @@ from threading import Thread
 from Box2D import *
 import math
 from random import randint
+import errno
 
 from clases.disparos import disparos
 from clases.asteroids import asteroids
@@ -127,7 +128,7 @@ class mainProcess(Thread):
                 for taa in self.clientes:
                     try:
                         tmp = taa.get_position()
-                        package += pack('iifff',tmp[0],-1,tmp[1],tmp[2], tmp[3] )
+                        package += pack('iifff',tmp[0],0,tmp[1],tmp[2], tmp[3] )
                     except:
                         pass
                 for taa in self.bullet:
@@ -142,6 +143,7 @@ class mainProcess(Thread):
                 for taa in self.clientes:
                     try:
                         taa.send_package(package)
+                        taa.recv_package()
                     except:
                         print "remove 2"
                         taa.remove()
@@ -175,23 +177,22 @@ class Cliente(Thread):
         self.change_hp = True
         self.change_energy = True
 
-    def run(self):
-        seguir = True
-        while seguir:
-            try:
-                result = self.socket.recv(5)
-                if result != "":
-                    try:
-                        self.Vactual_info = unpack("?????",result)
-                    except:
-                        pass
-                else:
-                    seguir = False
-                    print "leave client"
-            except:
-                seguir = False
+    def recv_package(self):
+        try:
+            result = self.socket.recv(5)
+            if result != "":
+                try:
+                    self.Vactual_info = unpack("?????",result)
+                except:
+                    pass
+            else:
+                self.remove()
+                print "leave client"
+        except Exception, (error,message):
+            if error != errno.WSAEWOULDBLOCK:
                 print "torroscazo"
-                break
+                raise "torroscazo"
+            
 
     def send_package(self, package):
         tmp = 0
@@ -207,7 +208,11 @@ class Cliente(Thread):
         if tmp != 0:
             pack_tmp = pack('i', tmp) + pack_tmp
             package += pack_tmp
-        self.socket.send(package)
+
+        try:
+            self.socket.send(package)
+        except:
+            pass
 
     def recv_damage(self,dmg):
         self.hp -= dmg
@@ -319,7 +324,7 @@ if __name__ == '__main__':
     while 1:
         # Se espera a un cliente
         socket_cliente, datos_cliente = server.accept()
-
+        socket_cliente.setblocking(0)
         # Se escribe su informacion
         print "conectado "+str(datos_cliente)
         print datos_cliente
@@ -328,9 +333,7 @@ if __name__ == '__main__':
         package = recvpackage(socket_cliente,4)
         package = unpack('i', package)
         if(package[0] == 1):
-            hilo3 = Cliente(socket_cliente, datos_cliente, world, bullet)
-            hilo3.start()
-            clientes.append(hilo3)
+            clientes.append(Cliente(socket_cliente, datos_cliente, world, bullet))
         #elif(package[0] == 0):
         #   servers.append([socket_cliente,datos_cliente,'file_return',0,'hilo','frame'])
         #   print "server anadido a la lista"
