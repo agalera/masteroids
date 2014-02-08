@@ -186,14 +186,12 @@ class Cliente(Thread):
                 except:
                     pass
             else:
-                self.remove()
-                print "leave client"
+                raise "torroscazo"
         except Exception, (error,message):
             if error != errno.WSAEWOULDBLOCK:
-                print "torroscazo"
                 raise "torroscazo"
-        except:
-            pass
+        else:
+            raise "torroscazo"
             
 
     def send_package(self, package):
@@ -310,7 +308,7 @@ if __name__ == '__main__':
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
 
     #generate asteroids
-    for ids in range(1000):
+    for ids in range(100):
         asteroids_dic[ids] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids, ids)
 
     # Se prepara el servidor
