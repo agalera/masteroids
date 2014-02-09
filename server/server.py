@@ -171,7 +171,8 @@ class Cliente(Thread):
         self.energy = 100.0
         self.change_hp = True
         self.change_energy = True
-
+        self.buffer_message = ""
+        self.fail_send = 0
     def recv_package(self):
         try:
             result = self.socket.recv(5)
@@ -202,12 +203,19 @@ class Cliente(Thread):
         if tmp != 0:
             pack_tmp = pack('i', tmp) + pack_tmp
             package += pack_tmp
-        while package:
-            try:
-	        package = package[self.socket.send(package):]
-            except:
-                print "fragment send", len(package)
-                pass
+        
+        if (self.buffer_message != ""):
+            package = self.buffer_message
+        try:
+            package = package[self.socket.send(package):]
+            self.buffer_message = ""
+            self.fail_send = 0
+        except:
+            self.buffer_message = package
+            self.fail_send += 1
+            if (self.fail_send > 600):
+                raise "crash client"
+            pass
         #self.socket.send(package)
 
     def recv_damage(self,dmg):
