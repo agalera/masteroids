@@ -148,6 +148,10 @@ class mainProcess(Thread):
                         taa.remove()
                         self.clientes.remove(taa)
 
+                timeSleep = 0.01 - (t_delta / 1000.0 )
+                if timeSleep > 0.0:
+                    time.sleep(timeSleep)
+
 class Cliente(Thread):
     def __init__(self, socket_cliente, datos_cliente, world, bullet):
         Thread.__init__(self)
@@ -187,7 +191,7 @@ class Cliente(Thread):
 
         except:
             pass
-            
+
 
     def send_package(self, package):
         tmp = 0
@@ -203,7 +207,7 @@ class Cliente(Thread):
         if tmp != 0:
             pack_tmp = pack('i', tmp) + pack_tmp
             package += pack_tmp
-        
+
         if (self.buffer_message != ""):
             package = self.buffer_message
         try:
@@ -312,7 +316,7 @@ if __name__ == '__main__':
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
 
     #generate asteroids
-    for ids in range(1000):
+    for ids in range(10):
         asteroids_dic[ids] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids, ids)
 
     # Se prepara el servidor
