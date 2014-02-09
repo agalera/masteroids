@@ -202,9 +202,12 @@ class Cliente(Thread):
         if tmp != 0:
             pack_tmp = pack('i', tmp) + pack_tmp
             package += pack_tmp
-        value = 0
         while package:
-	    package = package[self.socket.send(package):]
+            try:
+	        package = package[self.socket.send(package):]
+            except:
+                print "fragment send", len(package)
+                pass
         #self.socket.send(package)
 
     def recv_damage(self,dmg):
@@ -301,7 +304,7 @@ if __name__ == '__main__':
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
 
     #generate asteroids
-    for ids in range(1):
+    for ids in range(1000):
         asteroids_dic[ids] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids, ids)
 
     # Se prepara el servidor
