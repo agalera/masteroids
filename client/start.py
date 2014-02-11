@@ -8,8 +8,9 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import math
 from clases.player import player
-from PIL.Image import open
+from PIL.Image import open as pil_open
 import sys
+import csv
 
 from random import randint
 import clases.basicas as basicas
@@ -54,7 +55,7 @@ def enable_vsync():
 
 
 def loadImage(imageName):
-    im = open(imageName)
+    im = pil_open(imageName)
     try:
         ix, iy, image = im.size[0], im.size[1], im.tostring("raw", "RGBA", 0, -1)
     except SystemError:
@@ -245,7 +246,8 @@ def initFun():
     textures.append(loadImage('assets/frases1.png'))
 
     player = player(global_DL)
-        #thread sockets
+    load_map()
+    #thread sockets
     online = update_dates(player)
     online.start()
 
@@ -405,9 +407,11 @@ def RenderGLFun():
 
         setupTexture(6)
         background()
+        setupTexture(1)
+        glCallList(chunkDisplayList)
         #draw time (optional)
-        setupTexture(0)
 
+        setupTexture(0)
         draw_naves()
 
         #player.draw() #components.py:31 opengl
@@ -503,6 +507,102 @@ def draw_nave(position):
     glRotate(math.degrees(position[4]), 0, 0, -1)
     glTranslatef( -position[2] , -position[3], -0.0)
 
+def load_map():
+    size_tile = 0.64
+    from clases.casilla import casilla
+    from clases.objetos import objetos
+    import copy
+    #MatrixT = [[0 for x in xrange(30)] for x in xrange(400)]
+    Matrix = []
+    items = []
+    itemsDisplayList = []
+    global chunkDisplayList
+    chunkDisplayList = glGenLists(2)
+
+    mapa = list(csv.reader(open('assets/mapa.tmx')))
+    estado = 0
+    x = -1
+    y = 29
+    capa = -1
+    #for taa in range(int(50)):
+    #    self.items.append([])
+    for pepe in mapa:
+        if "orientation" in pepe[0]:
+            pos_tmp = pepe[0].find('width="')
+            string_tmp = pepe[0][pos_tmp+7:]
+            pos_tmp = string_tmp.find('"')
+            total_x = int(string_tmp[:pos_tmp])
+
+            pos_tmp = pepe[0].find('height="')
+            string_tmp = pepe[0][pos_tmp+8:]
+            pos_tmp = string_tmp.find('"')
+            total_y = int(string_tmp[:pos_tmp])
+            y = total_y-1
+            print total_x, total_y
+            xasd = 0
+            MatrixT = [[0 for xasd in xrange(total_y)] for xasd in xrange(total_x)]
+            print "matrixt generado"
+
+            for taa in range(int(total_x/8)):
+                items.append([])
+                itemsDisplayList.append((glGenLists(1)))
+
+        if pepe[0] == '  <data encoding="csv">':
+            capa +=1
+            if (capa < 2):
+                glNewList(chunkDisplayList+capa, GL_COMPILE)
+            estado = 1
+        elif pepe[0] == '</data>':
+            if (capa < 2):
+                glEndList()
+            estado = 0
+            Matrix.append(copy.deepcopy(MatrixT))
+            x = -1
+            y = total_y-1
+        elif estado == 1:
+            for taa in pepe:
+                if taa != "":
+                    x +=1
+                    if (capa == 2 and int(taa)-1 != -1):
+                        tmpe = casilla(int(taa)-1, objetos(int(taa)-1, 1))
+                    else:
+                        tmpe = casilla(int(taa)-1)
+                    if (int(taa)-1 != -1):
+                        if (capa < 2):
+                            create_tile(x,y,int(taa)-1)
+                        if (capa == 2):
+                            items[int(x/20)].append([x,y,tmpe])
+                    MatrixT[x][y] = tmpe
+                else:
+                    y -=1
+                    x = -1
+
+def create_tile(bx,by,tile):
+    size_tile = 0.64
+    print "create_tile"
+    bx = bx * size_tile
+    by = by * size_tile
+
+    texture_info_temp = [int(tile), 0];
+    textureXOffset = float(texture_info_temp[0]/16.0)+0.001
+    textureYOffset = float(16 - int(texture_info_temp[0]/16)/16.0)-0.001
+    textureHeight  = float(0.060)
+    textureWidth   = float(0.060)
+
+    glBegin(GL_QUADS)
+    glTexCoord2f(textureXOffset, textureYOffset - textureHeight)
+    glVertex3f(bx-(size_tile/2), by-(size_tile/2), 0)
+
+    glTexCoord2f(textureXOffset + textureWidth, textureYOffset - textureHeight)
+    glVertex3f(bx + (size_tile/2), by-(size_tile/2), 0)
+
+    glTexCoord2f(textureXOffset + textureWidth, textureYOffset)
+    glVertex3f(bx + (size_tile/2), by+(size_tile/2), 0)
+
+    glTexCoord2f(textureXOffset,textureYOffset)
+    glVertex3f(bx-(size_tile/2),by+(size_tile/2), 0)
+
+    glEnd()
 def getDelta():
     global lastFrame
     #time = 7.000.000
@@ -582,7 +682,7 @@ class update_dates(Thread):
                 player_pos = player.get_position()
                 for taa in range(int(numero_datos)):
                     tmp2 = unpack("iifff", recvpackage(self.s, 20))
-                    
+
 
                     if(math.hypot(player_pos[0] - tmp2[2], player_pos[1] - tmp2[3])<20):
                         if tmp2[0] == -2:
