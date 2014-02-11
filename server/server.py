@@ -14,6 +14,7 @@ from Box2D import *
 import math
 from random import randint
 
+from clases.chunk import chunk
 from clases.disparos import disparos
 from clases.asteroids import asteroids
 from clases.myContactListener import myContactListener
@@ -177,6 +178,7 @@ class Cliente(Thread):
         self.change_energy = True
         self.buffer_message = ""
         self.fail_send = 0
+
     def recv_package(self):
         try:
             result = self.socket.recv(5)
@@ -245,6 +247,7 @@ class Cliente(Thread):
 
     def get_position(self):
         return [self.datos[1], self.player.body.position[0],self.player.body.position[1],self.player.body.angle]
+
     def move(self, t_delta):
 
         #algunas funciones de movimiento no tienen en cuenta el delta, dejalo asi y luego lo arreglamos mas adelante
@@ -314,7 +317,7 @@ if __name__ == '__main__':
     myListener = myContactListener(borrar_bullet)
     myDestructor = myDestructionListener()
     world=b2World(gravity=(0,0),contactListener=myListener, destructorListener=myDestructor)
-
+    mapa = chunk(0,0,world)
     #generate asteroids
     for ids in range(10):
         asteroids_dic[ids] = asteroids(world, [randint(-10000,10000)/100,randint(-10000,10000)/100], borrar_asteroids, ids)
