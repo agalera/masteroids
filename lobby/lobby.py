@@ -45,11 +45,23 @@ class Cliente(Thread):
             package += pack('15si32siii',tmp[0],tmp[1],tmp[2],tmp[3],tmp[4],tmp[5])
         self.socket.send(package)
         self.socket.close()
-
+class removeServers(Thread):
+    def __init__(self, servers):
+        Thread.__init__(self)
+        self.servers = servers
+    def run(self):
+        while True:
+            for key in self.servers.keys():
+                if time.time() > self.servers[key][7]+100.0:
+                    print "remove server", self.servers[key]
+                    del self.servers[key]
+            time.sleep(10)
 #################################### Init code ####################################
 if __name__ == '__main__':
     servers = dict()
     global_id = 1
+    maestro = removeServers(servers)
+    maestro.start()
     # Se prepara el servidor
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #server = socket.socket(socket.SOCK_DGRAM)
@@ -75,7 +87,7 @@ if __name__ == '__main__':
             #id_random = package[5]
             #ip = datos_cliente[0]
             #port = package[0]
-            servers[global_id] = [datos_cliente[0],package[0], package[1], package[2],package[3],package[4],package[5]]
+            servers[global_id] = [datos_cliente[0],package[0], package[1], package[2],package[3],package[4],package[5],time.time()]
             socket_cliente.send(pack('i', global_id))
             global_id += 1
             socket_cliente.close()
@@ -87,6 +99,7 @@ if __name__ == '__main__':
             if select_server[0] == datos_cliente[0] and select_server[1] == package[1] and select_server[6] == package[4]:
                 servers[package[0]][3] = package[2]
                 servers[package[0]][4] = package[3]
+                servers[package[0]][7] = time.time()
                 print "update ok", package[0]
             else:
                 print "intento de falseo"
