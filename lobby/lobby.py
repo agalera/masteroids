@@ -42,6 +42,7 @@ class Cliente(Thread):
         package = pack('i', len(self.servers))
         for key in self.servers.keys():
             tmp = self.servers[key]
+            print tmp
             package += pack('15si32siii',tmp[0],tmp[1],tmp[2],tmp[3],tmp[4],tmp[5])
         self.socket.send(package)
         self.socket.close()
@@ -98,7 +99,7 @@ if __name__ == '__main__':
             select_server = servers[package[0]]
             if select_server[0] == datos_cliente[0] and select_server[1] == package[1] and select_server[6] == package[4]:
                 servers[package[0]][3] = package[2]
-                servers[package[0]][4] = package[3]
+                servers[package[0]][5] = package[3]
                 servers[package[0]][7] = time.time()
                 print "update ok", package[0]
             else:

@@ -13,7 +13,7 @@ from threading import Thread
 from Box2D import *
 import math
 from random import randint
-
+import sys
 from clases.chunk import chunk
 from clases.disparos import disparos
 from clases.asteroids import asteroids
@@ -59,6 +59,27 @@ def updateFPS():
         fps = 0
         last_time = time.time()
         #print last_time
+class updateLobby(Thread):
+    def __init__(self, clientes, port):
+        Thread.__init__(self)
+        self.clientes = clientes
+        self.port = port
+        self.register()
+
+    def connect(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.connect(("127.0.0.1", int(8004)))
+    def run(self):
+        while True:
+            time.sleep(60)
+            self.connect()
+            self.s.send(pack('iiiiii', 2, self.unique_id, self.port, len(self.clientes), 0, self.id_random))
+    def register(self):
+        self.id_random = randint(-sys.maxint,sys.maxint)
+        self.connect()
+        self.s.send(pack('ii32siiii', 0, self.port, "Pepito server", len(self.clientes), 32, 0,self.id_random))
+        self.unique_id = unpack('i', self.s.recv(4))[0]
+
 class mainProcess(Thread):
     def __init__(self, clientes, bullet, borrar_bullet ,borrar_asteroids, asteroids_dic):
         Thread.__init__(self)
@@ -329,6 +350,8 @@ if __name__ == '__main__':
     clientes = []
     maestro = mainProcess(clientes, bullet, borrar_bullet, borrar_asteroids,  asteroids_dic)
     maestro.start()
+    thread_updateLobby = updateLobby(clientes, 8003)
+    thread_updateLobby.start()
     server.bind(("", 8003))
     server.listen(5)
     print "Wait clients..."
