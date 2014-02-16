@@ -35,7 +35,7 @@ class Menu(object):
             server_list = self.request_server()
             self.items.append(("Name server",curses.flash,"a","t","maps"))
             for server in server_list:
-                self.items.append((server[2].split('\x00')[0],curses.flash,server[3],server[4],server[5]))
+                self.items.append((server[2].split('\x00')[0],"start",server[3],server[4],server[5]))
         self.items.append(('exit','exit'))
 
     def request_server(self):
@@ -83,7 +83,11 @@ class Menu(object):
                 if self.position == len(self.items)-1:
                     break
                 else:
-                    self.items[self.position][1]()
+                    if self.items[self.position][1] == "start":
+                        pass #init server
+                    else:
+                        self.items[self.position][1]()
+
 
             elif key == curses.KEY_UP:
                 self.navigate(-1)
