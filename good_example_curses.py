@@ -1,11 +1,28 @@
 #!/usr/bin/env python2
-
+import socket
+from struct import *
 import curses
 from curses import panel
 
+def recvpackage(socket_cliente,size_package):
+    package = socket_cliente.recv(int(size_package))
+    if (len(package) != size_package):
+        print "fragment buffer"
+        Esperando = True
+        while Esperando:
+            if (len(package) != size_package):
+                package = package + socket_cliente.recv(size_package - len(package))
+                if (package == ""):
+                    print "conexion broken"
+                    break
+            else:
+                Esperando = False
+    return package
+
+
 class Menu(object):
 
-    def __init__(self, items, stdscreen):
+    def __init__(self, items, stdscreen, select_menu):
         self.window = stdscreen.subwin(0,0)
         self.window.keypad(1)
         self.panel = panel.new_panel(self.window)
@@ -14,7 +31,24 @@ class Menu(object):
 
         self.position = 0
         self.items = items
+        if select_menu == 1:
+            server_list = self.request_server()
+            self.items.append(("Name server",curses.flash,"a","t","maps"))
+            for server in server_list:
+                self.items.append((server[2].split('\x00')[0],curses.flash,server[3],server[4],server[5]))
         self.items.append(('exit','exit'))
+
+    def request_server(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(("127.0.0.1", int(8004)))
+        #mode
+        mode = 1
+        server_list = []
+        s.send(pack('i', mode))
+        longitud = unpack('i', recvpackage(s, 4))[0]
+        for k in range(longitud):
+            server_list.append(unpack('15si32siii',recvpackage(s,64)))
+        return server_list
 
     def navigate(self, n):
         self.position += n
@@ -37,8 +71,11 @@ class Menu(object):
                 else:
                     mode = curses.A_NORMAL
 
-                msg = '%d. %s' % (index, item[0])
-                self.window.addstr(1+index, 1, msg, mode)
+                name_server = '%s' % (item[0])
+                self.window.addstr(1+index, 1, name_server, mode)
+                if 3 < len(item): #server list
+                    self.window.addstr(1+index, 64, str(item[2])+"/"+str(item[3]), mode)
+                    self.window.addstr(1+index, 70, str(item[4]), mode)
 
             key = self.window.getch()
 
@@ -64,19 +101,13 @@ class MyApp(object):
     def __init__(self, stdscreen):
         self.screen = stdscreen
         curses.curs_set(0)
-
-        submenu_items = [
-                ('beep', curses.beep),
-                ('flash', curses.flash)
-                ]
-        submenu = Menu(submenu_items, self.screen)
+        multiplayer_items = []
+        multiplayer = Menu(multiplayer_items, self.screen, 1)
 
         main_menu_items = [
-                ('beep', curses.beep),
-                ('flash', curses.flash),
-                ('submenu', submenu.display)
+                ('multiplayer', multiplayer.display)
                 ]
-        main_menu = Menu(main_menu_items, self.screen)
+        main_menu = Menu(main_menu_items, self.screen, 0)
         main_menu.display()
 
 if __name__ == '__main__':
