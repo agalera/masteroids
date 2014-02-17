@@ -3,6 +3,7 @@ import socket
 from struct import *
 import curses
 from curses import panel
+import os
 
 def recvpackage(socket_cliente,size_package):
     package = socket_cliente.recv(int(size_package))
@@ -35,8 +36,9 @@ class Menu(object):
             server_list = self.request_server()
             self.items.append(("Name server",curses.flash,"a","t","maps"))
             for server in server_list:
-                self.items.append((server[2].split('\x00')[0],"start",server[3],server[4],server[5]))
-        self.items.append(('exit','exit'))
+                self.items.append((server[2].split('\x00')[0],"start",server[3],server[4],server[5],server[0].split('\x00')[0], server[1]))
+        else:
+            self.items.append(('exit','exit'))
 
     def request_server(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -72,7 +74,7 @@ class Menu(object):
                     mode = curses.A_NORMAL
 
                 name_server = '%s' % (item[0])
-                self.window.addstr(1+index, 1, name_server, mode)
+                self.window.addstr(1+index, 1, str(name_server), mode)
                 if 3 < len(item): #server list
                     self.window.addstr(1+index, 64, str(item[2])+"/"+str(item[3]), mode)
                     self.window.addstr(1+index, 70, str(item[4]), mode)
@@ -84,7 +86,11 @@ class Menu(object):
                     break
                 else:
                     if self.items[self.position][1] == "start":
-                        pass #init server
+                        ip = self.items[self.position][5]
+                        port = self.items[self.position][6]
+                        os.system('cd client; python start.py '+str(ip)+' '+str(port))
+                        break
+                        #pass #init server
                     else:
                         self.items[self.position][1]()
 
@@ -112,6 +118,8 @@ class MyApp(object):
                 ('multiplayer', multiplayer.display)
                 ]
         main_menu = Menu(main_menu_items, self.screen, 0)
+
+        multiplayer_items.append(('back', main_menu.display))
         main_menu.display()
 
 if __name__ == '__main__':

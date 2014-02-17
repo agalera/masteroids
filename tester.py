@@ -30,7 +30,7 @@ def add_server():
     players = 0
     total_players = 32
     id_map = 1
-    id_random = random.randint(-sys.maxint,sys.maxint)
+    id_random = random.randint(-12222222,122222222)
     s.send(pack('ii32siiii', mode, port, name, players, total_players, id_map,id_random))
     return unpack('i', s.recv(4))[0], id_random
 
