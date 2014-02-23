@@ -18,18 +18,13 @@ from random import randint
 import os.path
 #################################### Functions network ####################################
 def recvpackage(socket_cliente,size_package):
-    package = socket_cliente.recv(int(size_package))
-    if (len(package) != size_package):
-        print "fragment buffer"
-        Esperando = True
-        while Esperando:
-            if (len(package) != size_package):
-                package = package + socket_cliente.recv(size_package - len(package))
-                if (package == ""):
-                    print "conexion broken"
-                    break
-            else:
-                Esperando = False
+    package = ''
+    while len(package) < size_package:
+        chunk = socket_cliente.recv(size_package - len(package))
+        if chunk == '':
+            print 'Connection broken'  # raise ...
+            break
+        package += chunk
     return package
 
 class Cliente(Thread):
