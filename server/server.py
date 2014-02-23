@@ -60,24 +60,24 @@ def updateFPS():
         last_time = time.time()
         #print last_time
 class updateLobby(Thread):
-    def __init__(self, clientes, port):
+    def __init__(self, clientes, port, server_name):
         Thread.__init__(self)
         self.clientes = clientes
         self.port = port
-        self.register()
+        self.register(server_name)
 
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.connect(("127.0.0.1", int(8004)))
+        self.s.connect(("masteroids.no-ip.org", int(8004)))
     def run(self):
         while True:
             time.sleep(60)
             self.connect()
             self.s.send(pack('iiiiii', 2, self.unique_id, self.port, len(self.clientes), 0, self.id_random))
-    def register(self):
+    def register(self, server_name):
         self.id_random = randint(-sys.maxint,sys.maxint)
         self.connect()
-        self.s.send(pack('ii32siiii', 0, self.port, "Pepito server", len(self.clientes), 32, 0,self.id_random))
+        self.s.send(pack('ii32siiii', 0, self.port, server_name, len(self.clientes), 10, 0,self.id_random))
         self.unique_id = unpack('i', self.s.recv(4))[0]
 
 class mainProcess(Thread):
@@ -350,7 +350,11 @@ if __name__ == '__main__':
     clientes = []
     maestro = mainProcess(clientes, bullet, borrar_bullet, borrar_asteroids,  asteroids_dic)
     maestro.start()
-    thread_updateLobby = updateLobby(clientes, 8003)
+    try:
+        server_name = sys.argv[1]
+    except:
+        server_name = "Default name"
+    thread_updateLobby = updateLobby(clientes, 8003, server_name)
     thread_updateLobby.start()
     server.bind(("", 8003))
     server.listen(5)

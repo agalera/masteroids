@@ -22,7 +22,7 @@ def recvpackage(socket_cliente,size_package):
 
 def add_server():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("127.0.0.1", int(8004)))
+    s.connect(("masteroids.no-ip.org", int(8004)))
     #mode
     mode = 0
     port = 8003
@@ -36,7 +36,7 @@ def add_server():
 
 def update_server(id_unique, id_random):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("127.0.0.1", int(8004)))
+    s.connect(("masteroids.no-ip.org", int(8004)))
     #mode
     mode = 2
     port = 8003
@@ -45,7 +45,7 @@ def update_server(id_unique, id_random):
     s.send(pack('iiiiii', mode, id_unique, port, players, id_map, id_random))
 def request_server():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("127.0.0.1", int(8004)))
+    s.connect(("masteroids.no-ip.org", int(8004)))
     #mode
     mode = 1
     server_list = []

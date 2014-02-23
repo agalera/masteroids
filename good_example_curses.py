@@ -42,7 +42,7 @@ class Menu(object):
 
     def request_server(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("127.0.0.1", int(8004)))
+        s.connect(("masteroids.no-ip.org", int(8004)))
         #mode
         mode = 1
         server_list = []
