@@ -244,6 +244,7 @@ def initFun():
     textures.append(loadImage('assets/inicio.png'))
     textures.append(loadImage('assets/gameover.png'))
     textures.append(loadImage('assets/frases1.png'))
+    textures.append(loadImage('assets/stGrid2.png'))
 
     player = player(global_DL)
     load_map()
@@ -407,7 +408,7 @@ def RenderGLFun():
 
         setupTexture(6)
         background()
-        setupTexture(1)
+        setupTexture(9)
         glCallList(chunkDisplayList)
         #draw time (optional)
 

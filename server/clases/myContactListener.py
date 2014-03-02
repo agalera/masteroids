@@ -15,13 +15,15 @@ class myContactListener(b2ContactListener):
 
         if var.fixtureA.body.bullet == True:
             print "remove A"
-            self.borrar.append(var.fixtureA.body)
+            if not var.fixtureA.body in self.borrar:
+                self.borrar.append(var.fixtureA.body)
         else:
             if var.fixtureA.body.userData != None:
                 var.fixtureA.body.userData.recv_damage(var2.normalImpulses[0])
         if var.fixtureB.body.bullet == True:
             print "remove B"
-            self.borrar.append(var.fixtureB.body)
+            if not var.fixtureB.body in self.borrar:
+                self.borrar.append(var.fixtureB.body)
         else:
             if var.fixtureA.body.userData != None:
                 var.fixtureB.body.userData.recv_damage(var2.normalImpulses[0]*2)

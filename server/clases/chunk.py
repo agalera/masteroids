@@ -147,6 +147,11 @@ class chunk:
                 s_y = (self.total_y-1) - int(y)
                 tile = self.Matrix[0][x][y].get_tile()
                 if (tile != -1):
+                    if posible_shape[0][0] == -1 and posible_shape[0][1] == -1:
+                        posible_shape[0] = (x,y)
+                    else:
+                        posible_shape[1] = (x,y)
+                else:
                     if posible_shape[0][0] != -1 and posible_shape[0][0] != -1 and posible_shape[1][0] != -1 and posible_shape[1][1] != -1:
                         shape.append(posible_shape)
                     if posible_shape[0][0] != -1 and posible_shape[0][0] != -1 and posible_shape[1][0] == -1 and posible_shape[1][0] == -1:
@@ -157,11 +162,6 @@ class chunk:
                     #    self.create_colision_triangle((x,y),True)
                     #if (tile == 5):
                     #    self.create_colision_triangle((x,y),False)
-                else:
-                    if posible_shape[0][0] == -1 and posible_shape[0][1] == -1:
-                        posible_shape[0] = (x,y)
-                    else:
-                        posible_shape[1] = (x,y)
                 #create dynamic bodys
                 tile = self.Matrix[3][x][y].get_tile()
                 #if (tile != -1):

@@ -102,28 +102,19 @@ class mainProcess(Thread):
                 timeStep = t_delta*0.0004
                 #borrar_bullet bullet colisionados
                 if (len(self.borrar_bullet) != 0):
-                    for taa in list(set(self.borrar_bullet)):
+                    for taa in self.borrar_bullet:
                         self.bullet.remove(taa.userData)
                         world.DestroyBody(taa)
                         self.borrar_bullet.remove(taa)
                         print "remove time"
-                if (len(self.borrar_bullet) != 0):
-                    print "duplicate items"
-                    for taa in self.borrar_bullet:
-                        self.borrar_bullet.remove(taa)
 
                 #borrar_bullet bullet colisionados
                 if (len(self.borrar_asteroids) != 0):
-                    for taa in list(set(self.borrar_asteroids)):
+                    for taa in self.borrar_asteroids:
                         self.asteroids_dic.pop(taa.userData.get_id(), None)
                         world.DestroyBody(taa)
                         self.borrar_asteroids.remove(taa)
                         print "remove time2"
-                if (len(self.borrar_asteroids) != 0):
-                    print "duplicate items2"
-                    for taa in self.borrar_asteroids:
-                        self.borrar_asteroids.remove(taa)
-
 
                 #clear bullet much range
                 for taa in self.bullet:

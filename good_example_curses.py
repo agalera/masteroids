@@ -83,7 +83,9 @@ class Menu(object):
                     if self.items[self.position][1] == "start":
                         ip = self.items[self.position][5]
                         port = self.items[self.position][6]
-                        os.system('cd client; python start.py '+str(ip)+' '+str(port))
+                        os.chdir('client')
+                        print ip, port
+                        #os.system('python start.py '+str(ip)+' '+str(port))
                         break
                         #pass #init server
                     else:
