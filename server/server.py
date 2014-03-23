@@ -134,12 +134,10 @@ class mainProcess(Thread):
         global_DL = glGenLists(256)
 
         print "aqui", global_DL
-        tmp2 = 0
-        for taa in range(global_DL,256 + global_DL):
-            glNewList(global_DL+tmp2, GL_COMPILE)
-            basicas.draw_cube(0.16, tmp2)
+        for taa in range(256):
+            glNewList(global_DL+taa, GL_COMPILE)
+            basicas.draw_cube(0.16, taa)
             glEndList()
-            tmp2 += 1
 
         textures.append(self.loadImage('assets/stGrid1.png'))
         textures.append(self.loadImage('assets/player.png'))
@@ -156,7 +154,7 @@ class mainProcess(Thread):
 
 
         self.enable_vsync()
-
+        self.load_map()
     def game(self):
         global t_delta
         global timeStep
@@ -222,11 +220,12 @@ class mainProcess(Thread):
             self.setupTexture(6)
             self.background()
             self.setupTexture(9)
-            #glCallList(chunkDisplayList)
+            glCallList(chunkDisplayList)
             #draw time (optional)
 
             self.setupTexture(0)
             self.draw_naves()
+            self.draw_bullet()
 
             #setupTexture(2)
 
@@ -277,13 +276,18 @@ class mainProcess(Thread):
                 cliente.remove()
                 self.clientes.remove(cliente)
             else:
-                self.draw_nave(cliente.get_position())
+                self.draw_object(cliente.get_position(),0)
 
-    def draw_nave(self,position):
+    def draw_bullet(self):
+        for bullet in self.bullet:
+            tmp = bullet.get_position()
+            self.draw_object([6, tmp[0][0], tmp[0][1], tmp[1]], 6)
+
+    def draw_object(self,position, value): #value is a temp
         size_tile = 0.32
         glTranslatef( position[1] , position[2], 0.0)
         glRotate(math.degrees(position[3]), 0, 0, 1)
-        glCallList(global_DL+abs(0))
+        glCallList(global_DL+abs(value))
 
         glRotate(math.degrees(position[3]), 0, 0, -1)
         glTranslatef( -position[1] , -position[2], -0.0)
@@ -409,9 +413,102 @@ class mainProcess(Thread):
         #else:
         #    glViewport(0,(h-w)/2,w,w)
 
-        class mainProcess(Thread):
-            def __init__(self, clientes, bullet, borrar_bullet ,borrar_asteroids, asteroids_dic):
-                Thread.__init__(self)
+    def create_tile(self, bx,by,tile):
+        size_tile = 0.64
+        print "create_tile"
+        bx = bx * size_tile
+        by = by * size_tile
+
+        texture_info_temp = [int(tile), 0];
+        textureXOffset = float(texture_info_temp[0]/16.0)+0.001
+        textureYOffset = float(16 - int(texture_info_temp[0]/16)/16.0)-0.001
+        textureHeight  = float(0.060)
+        textureWidth   = float(0.060)
+
+        glBegin(GL_QUADS)
+        glTexCoord2f(textureXOffset, textureYOffset - textureHeight)
+        glVertex3f(bx-(size_tile/2), by-(size_tile/2), 0)
+
+        glTexCoord2f(textureXOffset + textureWidth, textureYOffset - textureHeight)
+        glVertex3f(bx + (size_tile/2), by-(size_tile/2), 0)
+
+        glTexCoord2f(textureXOffset + textureWidth, textureYOffset)
+        glVertex3f(bx + (size_tile/2), by+(size_tile/2), 0)
+
+        glTexCoord2f(textureXOffset,textureYOffset)
+        glVertex3f(bx-(size_tile/2),by+(size_tile/2), 0)
+
+        glEnd()
+
+    def load_map(self):
+        size_tile = 0.64
+        from clases.casilla import casilla
+        from clases.objetos import objetos
+        import copy
+        #MatrixT = [[0 for x in xrange(30)] for x in xrange(400)]
+        Matrix = []
+        items = []
+        itemsDisplayList = []
+        global chunkDisplayList
+        chunkDisplayList = glGenLists(2)
+
+        mapa = list(csv.reader(open('assets/mapa.tmx')))
+        estado = 0
+        x = -1
+        y = 29
+        capa = -1
+        #for taa in range(int(50)):
+        #    self.items.append([])
+        for pepe in mapa:
+            if "orientation" in pepe[0]:
+                pos_tmp = pepe[0].find('width="')
+                string_tmp = pepe[0][pos_tmp+7:]
+                pos_tmp = string_tmp.find('"')
+                total_x = int(string_tmp[:pos_tmp])
+
+                pos_tmp = pepe[0].find('height="')
+                string_tmp = pepe[0][pos_tmp+8:]
+                pos_tmp = string_tmp.find('"')
+                total_y = int(string_tmp[:pos_tmp])
+                y = total_y-1
+                print total_x, total_y
+                xasd = 0
+                MatrixT = [[0 for xasd in xrange(total_y)] for xasd in xrange(total_x)]
+                print "matrixt generado"
+
+                for taa in range(int(total_x/8)):
+                    items.append([])
+                    itemsDisplayList.append((glGenLists(1)))
+
+            if pepe[0] == '  <data encoding="csv">':
+                capa +=1
+                if (capa < 2):
+                    glNewList(chunkDisplayList+capa, GL_COMPILE)
+                estado = 1
+            elif pepe[0] == '</data>':
+                if (capa < 2):
+                    glEndList()
+                estado = 0
+                Matrix.append(copy.deepcopy(MatrixT))
+                x = -1
+                y = total_y-1
+            elif estado == 1:
+                for taa in pepe:
+                    if taa != "":
+                        x +=1
+                        if (capa == 2 and int(taa)-1 != -1):
+                            tmpe = casilla(int(taa)-1, objetos(int(taa)-1, 1))
+                        else:
+                            tmpe = casilla(int(taa)-1)
+                        if (int(taa)-1 != -1):
+                            if (capa < 2):
+                                self.create_tile(x,y,int(taa)-1)
+                            if (capa == 2):
+                                items[int(x/20)].append([x,y,tmpe])
+                        MatrixT[x][y] = tmpe
+                    else:
+                        y -=1
+                        x = -1
 
 class Cliente(Thread):
     def __init__(self, socket_cliente, datos_cliente, world, bullet):
