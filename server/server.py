@@ -12,6 +12,7 @@ from struct import pack, unpack
 from threading import Thread
 from Box2D import *
 import math
+import random
 from random import randint
 import sys
 from clases.chunk import chunk
@@ -19,6 +20,17 @@ from clases.disparos import disparos
 from clases.asteroids import asteroids
 from clases.myContactListener import myContactListener
 from clases.myDestructionListener import myDestructionListener
+
+
+from OpenGL.GL import *
+from OpenGL.GLUT import *
+from OpenGL.GLU import *
+from clases.player import player
+from PIL.Image import open as pil_open
+import csv
+
+import clases.basicas as basicas
+from threading import Thread
 
 #import os
 import os.path
@@ -85,80 +97,321 @@ class mainProcess(Thread):
         self.asteroids_dic = asteroids_dic
 
     def run(self):
+        glutInit()
+        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
+        glutInitWindowSize(resolution[0],resolution[1])
+        glutCreateWindow("Masteroids")
+
+        #glutSpecialFunc(ControlFlechas)
+
+        #glutSpecialUpFunc(ControlFlechasUp)
+        #glutTimerFunc(16,update, 1)
+
+        glutDisplayFunc(self.game)
+        glutIdleFunc(self.game)
+        glutReshapeFunc(self.reshapeFun)
+        glutMouseFunc(self.ControlRaton)
+        glutPassiveMotionFunc(self.ControlRatonPos)
+        glutMotionFunc(self.ControlRatonPos)
+        self.initFun()
+        glutMainLoop()
+
+    def initFun(self):
+        print "initFun"
+        glEnable(GL_AUTO_NORMAL)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
+        glClearColor(0.0,0.0,0.0,0.0)
+        #reshapeFun(resolution[0],resolution[1])
+        ### load textures and initial chunk
+        global textures
+        global Lchunk
+        global player
+        global world
+
+        global global_DL
+
+        global_DL = glGenLists(256)
+
+        print "aqui", global_DL
+        tmp2 = 0
+        for taa in range(global_DL,256 + global_DL):
+            glNewList(global_DL+tmp2, GL_COMPILE)
+            basicas.draw_cube(0.16, tmp2)
+            glEndList()
+            tmp2 += 1
+
+        textures.append(self.loadImage('assets/stGrid1.png'))
+        textures.append(self.loadImage('assets/player.png'))
+        textures.append(self.loadImage('assets/bullet.png'))
+        textures.append(self.loadImage('assets/stGriddeco.png'))
+        textures.append(self.loadImage('assets/icons.png'))
+        textures.append(self.loadImage('assets/tren_1.png'))
+        textures.append(self.loadImage('assets/inicio.png'))
+        textures.append(self.loadImage('assets/gameover.png'))
+        textures.append(self.loadImage('assets/frases1.png'))
+        textures.append(self.loadImage('assets/stGrid2.png'))
+
+        player = player(global_DL)
+
+
+        self.enable_vsync()
+
+    def game(self):
         global t_delta
         global timeStep
-        while True:
-            #recorre la lista de clientes
 
-            if len(self.clientes) == 0:
-                updateFPS()
-                t_delta = getDelta()
-                timeSleep = 0.02 - (t_delta / 1000.0 )
-                if timeSleep > 0.0:
-                    time.sleep(timeSleep)
+        #recorre la lista de clientes
+        updateFPS()
+        t_delta = getDelta()
+        if len(self.clientes) == 0:
+            timeSleep = 0.02 - (t_delta / 1000.0 )
+            if timeSleep > 0.0:
+                time.sleep(timeSleep)
+        else:
+            timeStep = t_delta*0.0004
+            #borrar_bullet bullet colisionados
+            if (len(self.borrar_bullet) != 0):
+                for taa in self.borrar_bullet:
+                    self.bullet.remove(taa.userData)
+                    world.DestroyBody(taa)
+                    self.borrar_bullet.remove(taa)
+                    print "remove time"
+
+            #borrar_bullet bullet colisionados
+            if (len(self.borrar_asteroids) != 0):
+                for taa in self.borrar_asteroids:
+                    self.asteroids_dic.pop(taa.userData.get_id(), None)
+                    world.DestroyBody(taa)
+                    self.borrar_asteroids.remove(taa)
+                    print "remove time2"
+
+            #clear bullet much range
+            for taa in self.bullet:
+                actual_pos = taa.get_position()
+                init_pos = taa.get_init_post()
+                #print math.hypot(init_pos[0][0] - actual_pos[0][0], init_pos[0][1] - actual_pos[0][1])
+                if(math.hypot(init_pos[0] - actual_pos[0][0], init_pos[1] - actual_pos[0][1])>50):
+                    world.DestroyBody(taa.get_body())
+                    self.bullet.remove(taa)
+            for taa in self.clientes:
+                taa.move(t_delta)
+                #mueve las mierdas
+            #calcula las mierdas
+            world.Step(timeStep, vel_iters, pos_iters)
+            world.ClearForces()
+
+
+            #A PINTAR!
+            #---- Init Experimental zone ----
+            global animate
+            animate +=float(t_delta)/60.0
+            if animate > 16:
+                animate = 0.0
+
+            #---- End Experimental zone ----
+            #Init Frame
+            glClearColor(0.3,0.3,0.3,0.0)
+            glClear(GL_COLOR_BUFFER_BIT)
+            glLoadIdentity()
+
+            player.set_position(self.clientes[0])
+
+            self.create_camera(False)
+
+            self.setupTexture(6)
+            self.background()
+            self.setupTexture(9)
+            #glCallList(chunkDisplayList)
+            #draw time (optional)
+
+            self.setupTexture(0)
+            self.draw_naves()
+
+            #setupTexture(2)
+
+            #GUI
+            self.create_camera(True)
+            #self.draw_fps()
+            #FIN GUI
+
+            #draw_select()
+            #go to gpu
+            glutSwapBuffers()
+            #timeSleep = 0.03 - (t_delta / 1000.0 )
+            #if timeSleep > 0.0:
+            #    time.sleep(timeSleep)
+
+            #crea un paquete
+            #package = pack('i', int(len(self.clientes)+len(self.bullet)+len(self.asteroids_dic)))
+            #for taa in self.clientes:
+            #    try:
+            #        tmp = taa.get_position()
+            #        package += pack('iifff',tmp[0],0,tmp[1],tmp[2], tmp[3] )
+            #    except:
+            #        pass
+            #for taa in self.bullet:
+            #    pos_tmp, angle_tmp = taa.get_position()
+            #    package += pack('iifff',-1,-1,pos_tmp[0],pos_tmp[1], angle_tmp)
+#
+            #for key in self.asteroids_dic.keys():
+            #    pos_tmp, angle_tmp = self.asteroids_dic[key].get_position()
+            #    package += pack('iifff',key,-2,pos_tmp[0],pos_tmp[1],0)
+#
+            ##envia las mierdas
+            #for taa in self.clientes:
+            #    try:
+            #        taa.send_package(package)
+            #        taa.recv_package()
+            #    except:
+            #        print "remove 2"
+            #        taa.remove()
+            #        self.clientes.remove(taa)
+#
+            #timeSleep = 0.01 - (t_delta / 1000.0 )
+            #if timeSleep > 0.0:
+            #    time.sleep(timeSleep)
+    def draw_naves(self):
+        for cliente in self.clientes:
+            if cliente.get_borrame():
+                cliente.remove()
+                self.clientes.remove(cliente)
             else:
-                updateFPS()
-                t_delta = getDelta()
-                timeStep = t_delta*0.0004
-                #borrar_bullet bullet colisionados
-                if (len(self.borrar_bullet) != 0):
-                    for taa in self.borrar_bullet:
-                        self.bullet.remove(taa.userData)
-                        world.DestroyBody(taa)
-                        self.borrar_bullet.remove(taa)
-                        print "remove time"
+                self.draw_nave(cliente.get_position())
 
-                #borrar_bullet bullet colisionados
-                if (len(self.borrar_asteroids) != 0):
-                    for taa in self.borrar_asteroids:
-                        self.asteroids_dic.pop(taa.userData.get_id(), None)
-                        world.DestroyBody(taa)
-                        self.borrar_asteroids.remove(taa)
-                        print "remove time2"
+    def draw_nave(self,position):
+        size_tile = 0.32
+        glTranslatef( position[1] , position[2], 0.0)
+        glRotate(math.degrees(position[3]), 0, 0, 1)
+        glCallList(global_DL+abs(0))
 
-                #clear bullet much range
-                for taa in self.bullet:
-                    actual_pos = taa.get_position()
-                    init_pos = taa.get_init_post()
-                    #print math.hypot(init_pos[0][0] - actual_pos[0][0], init_pos[0][1] - actual_pos[0][1])
-                    if(math.hypot(init_pos[0] - actual_pos[0][0], init_pos[1] - actual_pos[0][1])>50):
-                        world.DestroyBody(taa.get_body())
-                        self.bullet.remove(taa)
-                for taa in self.clientes:
-                    taa.move(t_delta)
-                    #mueve las mierdas
-                #calcula las mierdas
-                world.Step(timeStep, vel_iters, pos_iters)
-                world.ClearForces()
-                #crea un paquete
-                package = pack('i', int(len(self.clientes)+len(self.bullet)+len(self.asteroids_dic)))
-                for taa in self.clientes:
-                    try:
-                        tmp = taa.get_position()
-                        package += pack('iifff',tmp[0],0,tmp[1],tmp[2], tmp[3] )
-                    except:
-                        pass
-                for taa in self.bullet:
-                    pos_tmp, angle_tmp = taa.get_position()
-                    package += pack('iifff',-1,-1,pos_tmp[0],pos_tmp[1], angle_tmp)
+        glRotate(math.degrees(position[3]), 0, 0, -1)
+        glTranslatef( -position[1] , -position[2], -0.0)
 
-                for key in self.asteroids_dic.keys():
-                    pos_tmp, angle_tmp = self.asteroids_dic[key].get_position()
-                    package += pack('iifff',key,-2,pos_tmp[0],pos_tmp[1],0)
+    def background(self):
+        texture_info_temp = 2
+        textureXOffset = 1
+        textureYOffset = 1
+        textureHeight  = 1
+        textureWidth   = 1
 
-                #envia las mierdas
-                for taa in self.clientes:
-                    try:
-                        taa.send_package(package)
-                        taa.recv_package()
-                    except:
-                        print "remove 2"
-                        taa.remove()
-                        self.clientes.remove(taa)
+        #glTranslatef( self.body.position[0] , self.body.position[1], 0.00)
+        glRotate(0, 0, 0, 1)
+        glBegin(GL_QUADS)
+        glTexCoord2f(textureXOffset, textureYOffset - textureHeight)
 
-                timeSleep = 0.01 - (t_delta / 1000.0 )
-                if timeSleep > 0.0:
-                    time.sleep(timeSleep)
+        glVertex3f(-100, -100, 0)
+
+        glTexCoord2f(textureXOffset + textureWidth, textureYOffset - textureHeight)
+        glVertex3f(100, -100, 0)
+
+        glTexCoord2f(textureXOffset + textureWidth, textureYOffset)
+        glVertex3f( 100,  100, 0)
+
+        glTexCoord2f(textureXOffset,textureYOffset)
+        glVertex3f(-100, 100, 0)
+        glEnd()
+        glRotate(0, 0, 0, -1)
+
+    def setupTexture(self,imageID):
+        glEnable(GL_TEXTURE_2D)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        #glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        #glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glBindTexture(GL_TEXTURE_2D, textures[imageID])
+        #texCoordsFrame1 = [0.32]
+        #glTexCoordPointer(2, GL_FLOAT, 0, textures[imageID])
+        #glTexCoordPointer(2, GL_FLOAT, 1000, 1000)
+
+    def enable_vsync(self):
+        pass
+        #glEnable(GL_VSYNC)
+            # set v to 1 to enable vsync, 0 to disable vsync
+
+    def loadImage(self,imageName):
+        im = pil_open(imageName)
+        try:
+            ix, iy, image = im.size[0], im.size[1], im.tostring("raw", "RGBA", 0, -1)
+        except SystemError:
+            ix, iy, image = im.size[0], im.size[1], im.tostring("raw", "RGBX", 0, -1)
+        ID = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, ID)
+        glPixelStorei(GL_UNPACK_ALIGNMENT,4)
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGBA, ix, iy, 0, GL_RGBA, GL_UNSIGNED_BYTE, image
+        )
+        return ID
+
+    def create_camera(self,zoom_lock):
+        glLoadIdentity()
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        if(zoom_lock):
+            zoom_tmp = 3.0
+        else:
+            zoom_tmp = zoom
+        if (aspect >= 1.0):
+            glOrtho(-zoom_tmp * aspect, zoom_tmp * aspect, -zoom_tmp, zoom_tmp, -zoom_tmp, zoom_tmp)
+        else:
+            print "wtf"
+            glOrtho(-zoom_tmp, zoom_tmp, -zoom_tmp / aspect, zoom_tmp / aspect, -zoom_tmp, zoom_tmp)
+        glMatrixMode(GL_MODELVIEW)
+        if (zoom_lock == False):
+            glRotate(0, 0, 0, 0)
+            glRotate(0, 1, 0, 0)
+            glRotate(0, 0, 0, 1)
+            camera = player.get_position()
+            glTranslate( -camera[0] , -camera[1], 0)
+
+    def ControlRatonPos(self,x,y):
+        global radians
+        radians = (math.atan2(-((resolution[1]/2)-y), (resolution[0]/2)-x)+ 3.14159266)
+
+    def ControlRaton(self,key,leave,x,y):
+        global wasd
+        global zoom
+        if key <= 2 :
+            self.ControlRatonPos(x,y)
+            wasd[5][key] = not leave
+        if (key == 3):
+            zoom -= 0.32
+            reshapeFun(resolution[0], resolution[1])
+        if (key == 4):
+            zoom += 0.32
+            reshapeFun(resolution[0], resolution[1])
+
+    def object_select(self):
+        v_object_select[0] = int((player.get_position()[0][0]+0.16) * 3.125)
+        v_object_select[1] = int((player.get_position()[0][1]+0.16) * 3.125)
+    def reshapeFun(self,wi,he):
+        global resolution
+        resolution = [wi,he]
+        global aspect
+        aspect = 1.9
+        aspect = resolution[0] / resolution[1]
+        glViewport(0, 0, wi, he)
+        print "inv: " + str(aspect)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        if (aspect >= 1.0):
+            print wi, he
+            glOrtho(-zoom * aspect, zoom * aspect, -zoom, zoom, -zoom, zoom)
+        else:
+            print "wtf"
+            glOrtho(-zoom, zoom, -zoom / aspect, zoom / aspect, -zoom, zoom)
+        glMatrixMode(GL_MODELVIEW)
+        print zoom
+        #glMatrixMode(GL_MODELVIEW);
+
+        #if w>h:
+        #    glViewport((w-h)/2,0,h,h)
+        #else:
+        #    glViewport(0,(h-w)/2,w,w)
+
+        class mainProcess(Thread):
+            def __init__(self, clientes, bullet, borrar_bullet ,borrar_asteroids, asteroids_dic):
+                Thread.__init__(self)
 
 class Cliente(Thread):
     def __init__(self, socket_cliente, datos_cliente, world, bullet):
@@ -185,21 +438,28 @@ class Cliente(Thread):
         self.change_energy = True
         self.buffer_message = ""
         self.fail_send = 0
+        self.borrame = False
+        print "aqui estoy"
 
     def recv_package(self):
-        try:
-            result = self.socket.recv(5)
-            if result != "":
-                try:
-                    self.Vactual_info = unpack("?????",result)
-                except:
-                    pass
-            else:
-                print "top else"
-                raise "a tomar por culo"
+        result = self.socket.recv(5)
+        if result != "":
+            self.Vactual_info = unpack("?????",result)
+        else:
+            print "top else"
+            raise "a tomar por culo"
 
+    def run(self):
+        try:
+            while True:
+                self.recv_package()
         except:
-            pass
+            self.borrame = True
+    def get_borrame(self):
+        return self.borrame
+    def get_id(self):
+        return self.datos
+
 
 
     def send_package(self, package):
@@ -307,6 +567,18 @@ class Cliente(Thread):
 
 #################################### Init code ####################################
 if __name__ == '__main__':
+
+    #client
+    resolution = [800,600]
+    Lchunk = []
+    size_tile = 0.16
+    calculate_size = size_tile # deprecated
+    v_object_select = [0,0]
+    textures = []
+    status_global = 0
+    zoom = 3.0
+
+    #server
     last_time = time.time()
     t_delta = 0
     fps = 0
@@ -340,15 +612,18 @@ if __name__ == '__main__':
         server_name = sys.argv[1]
     except:
         server_name = "Default name"
-    thread_updateLobby = updateLobby(clientes, 8003, server_name)
-    thread_updateLobby.start()
+    try:
+        thread_updateLobby = updateLobby(clientes, 8003, server_name)
+        thread_updateLobby.start()
+    except:
+        print "lobby down"
     server.bind(("", 8003))
     server.listen(5)
     print "Wait clients..."
     while 1:
         # Se espera a un cliente
         socket_cliente, datos_cliente = server.accept()
-        socket_cliente.setblocking(0)
+
         # Se escribe su informacion
         print "conectado "+str(datos_cliente)
         print datos_cliente
@@ -357,7 +632,9 @@ if __name__ == '__main__':
         package = recvpackage(socket_cliente,4)
         package = unpack('i', package)
         if(package[0] == 1):
-            clientes.append(Cliente(socket_cliente, datos_cliente, world, bullet))
+            client_pa_la_lista = Cliente(socket_cliente, datos_cliente, world, bullet)
+            client_pa_la_lista.start()
+            clientes.append(client_pa_la_lista)
         #elif(package[0] == 0):
         #   servers.append([socket_cliente,datos_cliente,'file_return',0,'hilo','frame'])
         #   print "server anadido a la lista"
